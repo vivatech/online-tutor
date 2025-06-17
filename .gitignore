@@ -28,3 +28,4 @@ replay_pid*
 /mvnw
 /.mvn/wrapper/maven-wrapper.properties
 /.gitattributes
+/uploads/**

@@ -44,7 +44,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/event/users/**").permitAll()  // Bypass authentication for /users endpoints
+                        .requestMatchers("/api/**", "/ws/**").permitAll()  // Bypass authentication for /users endpoints
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()  // Bypass authentication for /users endpoints
                         .anyRequest().authenticated()              // Authenticate all other requests
                 )
@@ -56,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigins, "*"));
+        configuration.setAllowedOrigins(List.of(allowedOrigins));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setExposedHeaders(List.of("Authorization"));

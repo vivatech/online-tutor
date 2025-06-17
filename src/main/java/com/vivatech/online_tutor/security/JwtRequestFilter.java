@@ -76,13 +76,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private boolean skipURL(String requestURI){
         List<String> skipURL = Arrays.asList(
-                "/api/v1/event/users/**",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
                 "/swagger-resources/**",
                 "/webjars/**",
-                "/api-docs/**"
+                "/api-docs/**",
+                "/api/**", "/ws/**"
         );
         AntPathMatcher pathMatcher = new AntPathMatcher();
 
