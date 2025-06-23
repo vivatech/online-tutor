@@ -1,7 +1,7 @@
 # Read Me First
 The following was discovered as part of building this project:
 
-* The original package name 'com.vivatech.online-tutor' is invalid and this project uses 'com.vivatech.online_tutor' instead.
+* The original package name 'com.vivatech.online-tutor' is invalid and this project uses 'com.vivatech.onlinetutor' instead.
 
 # Getting Started
 
