@@ -1,15 +1,15 @@
 package com.vivatech.onlinetutor.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vivatech.mumly_event.helper.EventConstants;
 import com.vivatech.onlinetutor.dto.PaginationResponse;
+import com.vivatech.onlinetutor.dto.PayoutRequestDto;
 import com.vivatech.onlinetutor.dto.Response;
 import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
 import com.vivatech.onlinetutor.helper.AppEnums;
-import com.vivatech.onlinetutor.helper.Constants;
 import com.vivatech.onlinetutor.helper.CustomUtils;
+import com.vivatech.onlinetutor.model.MumlyTutorPayout;
 import com.vivatech.onlinetutor.model.SessionMeeting;
 import com.vivatech.onlinetutor.model.SessionRegistration;
+import com.vivatech.onlinetutor.repository.MumlyTutorPayoutRepository;
 import com.vivatech.onlinetutor.repository.SessionMeetingRepository;
 import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
 import com.vivatech.onlinetutor.videochat.MeetingResponseDto;
@@ -32,11 +32,13 @@ import com.vivatech.onlinetutor.repository.TutorSessionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class SessionService {
+    private final MumlyTutorPayoutRepository mumlyTutorPayoutRepository;
     private final SessionRegistrationRepository sessionRegistrationRepository;
     private final SessionMeetingRepository sessionMeetingRepository;
     private final UserRepository userRepository;
@@ -265,5 +267,35 @@ public class SessionService {
         List<SessionRegistration> registrationList = sessionRegistrationRepository.findByStudentPhoneContaining(phoneNumber);
         List<TutorSession> tutorSessions = registrationList.stream().map(SessionRegistration::getRegisteredSession).toList();
         return getUpcomingMeeting(tutorSessions, null);
+    }
+
+    @Transactional
+    public Response savePayoutDetail(PayoutRequestDto dto) {
+        MumlyTutorPayout mumlyEventPayout = mumlyTutorPayoutRepository.findByTutorSessionId(dto.getSessionId());
+        if (mumlyEventPayout == null) throw new OnlineTutorExceptionHandler("Payout not found");
+        mumlyEventPayout.setCommission(dto.getCommission());
+        mumlyEventPayout.setNetAmount(dto.getNetAmount());
+        mumlyEventPayout.setPaymentStatus(dto.getPaymentStatus().toString());
+        mumlyEventPayout.setTransactionId(dto.getTransactionId());
+        mumlyEventPayout.setReferenceNo(dto.getReferenceNo());
+        mumlyEventPayout.setPaymentMode(dto.getPaymentMode().toString());
+        mumlyEventPayout.setReason(dto.getReason());
+        mumlyTutorPayoutRepository.save(mumlyEventPayout);
+        return Response.builder().status(AppEnums.EventStatus.SUCCESS.toString()).message("Payout updated successfully.").build();
+    }
+
+    public List<PayoutRequestDto> getPendingPayouts() {
+        List<MumlyTutorPayout> tutorPayouts = mumlyTutorPayoutRepository.findByPaymentStatus(AppEnums.PaymentStatus.PENDING.toString());
+        List<PayoutRequestDto> dtoList = new ArrayList<>();
+        for (MumlyTutorPayout tutorPayout : tutorPayouts) {
+            PayoutRequestDto dto = new PayoutRequestDto();
+            dto.setSessionId(tutorPayout.getTutorSession().getId());
+            dto.setAmount(tutorPayout.getAmount());
+            dto.setCommission(null);
+            dto.setNetAmount(null);
+            dto.setPaymentStatus(AppEnums.PaymentStatus.valueOf(tutorPayout.getPaymentStatus()));
+            dtoList.add(dto);
+        }
+        return dtoList;
     }
 }

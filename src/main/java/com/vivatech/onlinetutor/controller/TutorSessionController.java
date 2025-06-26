@@ -1,6 +1,8 @@
 package com.vivatech.onlinetutor.controller;
 
 import com.vivatech.onlinetutor.dto.PaginationResponse;
+import com.vivatech.onlinetutor.dto.PayoutRequestDto;
+import com.vivatech.onlinetutor.dto.Response;
 import com.vivatech.onlinetutor.helper.Constants;
 import com.vivatech.onlinetutor.model.TutorSession;
 import com.vivatech.onlinetutor.webchat.dto.SessionRequestDTO;
@@ -80,4 +82,24 @@ public class TutorSessionController {
     public List<SessionResponseDTO> viewSessionByPhone(@PathVariable String phoneNumber) {
         return sessionService.findSessionListByPhoneNumber(phoneNumber);
     }
+
+    @Operation(summary = "Send payout to tutor for particular session",
+            requestBody = @RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(implementation = PayoutRequestDto.class) // Link to your DTO schema
+                    )
+            )
+    )
+    @PostMapping("/send-payout-of-tutor")
+    public Response sendPayoutOfTutor(@ModelAttribute PayoutRequestDto dto) {
+        return sessionService.savePayoutDetail(dto);
+    }
+
+    @GetMapping("/get-pending-payouts")
+    public List<PayoutRequestDto> getPendingPayouts() {
+        return sessionService.getPendingPayouts();
+    }
+
+
 }

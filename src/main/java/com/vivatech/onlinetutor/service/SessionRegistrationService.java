@@ -1,18 +1,20 @@
 package com.vivatech.onlinetutor.service;
-import java.time.LocalDateTime;
 
+import java.time.LocalDateTime;
 import com.vivatech.onlinetutor.dto.PaginationResponse;
 import com.vivatech.onlinetutor.dto.Response;
 import com.vivatech.onlinetutor.dto.SessionRegistrationDto;
 import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
 import com.vivatech.onlinetutor.helper.AppEnums;
 import com.vivatech.onlinetutor.helper.CustomUtils;
+import com.vivatech.onlinetutor.model.MumlyTutorPayment;
 import com.vivatech.onlinetutor.model.TutorSession;
 
 import com.vivatech.onlinetutor.dto.SessionRegistrationRequestDto;
 import com.vivatech.onlinetutor.model.SessionRegistration;
 import com.vivatech.onlinetutor.notification.OnlineTutorNotificationService;
 import com.vivatech.onlinetutor.payment.PaymentService;
+import com.vivatech.onlinetutor.repository.MumlyTutorPaymentRepository;
 import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
 import com.vivatech.onlinetutor.repository.TutorSessionRepository;
 import com.vivatech.onlinetutor.webchat.dto.CreateUserRequest;
@@ -45,6 +47,8 @@ public class SessionRegistrationService {
     private UserService userService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private MumlyTutorPaymentRepository mumlyTutorPaymentRepository;
 
     @Transactional
     public Response createSessionRegistration(SessionRegistrationRequestDto requestDto) {
@@ -67,7 +71,8 @@ public class SessionRegistrationService {
         sessionRegistration.setCreatedAt(LocalDateTime.now());
         SessionRegistration savedRegistration = sessionRegistrationRepository.save(sessionRegistration);
         CreateUserRequest createUserRequest = prepareDtoToSaveParent(savedRegistration);
-        userService.createUser(createUserRequest);
+
+        if (userRepository.findByUsername(createUserRequest.getUsername()).isEmpty()) userService.createUser(createUserRequest);
         notificationService.sendAdminNotification(savedRegistration.getId(), AppEnums.NotificationType.REGISTRATION, null);
         requestDto.getPaymentDto().setSessionRegistrationId(savedRegistration.getId());
         Response response = paymentService.processPayment(requestDto.getPaymentDto());
@@ -115,5 +120,12 @@ public class SessionRegistrationService {
         List<SessionRegistration> registeredStudents = sessionRegistrationRepository.findByRegisteredSessionId(sessionId);
         Page<SessionRegistration> sessionRegistrations = CustomUtils.convertListToPage(registeredStudents, pageNumber, size);
         return CustomUtils.convertPageToPaginationResponse(sessionRegistrations, sessionRegistrations.getContent());
+    }
+
+    public void receiveCashPayment(String referenceNo) {
+        MumlyTutorPayment payment = mumlyTutorPaymentRepository.findByReferenceNo(referenceNo);
+        if (payment == null) throw new OnlineTutorExceptionHandler("Payment not found");
+        String successTransactionId = CustomUtils.generateRandomString();
+        paymentService.processPaymentCallBack(payment.getReferenceNo(), successTransactionId, AppEnums.PaymentStatus.COMPLETE.toString(), null);
     }
 }

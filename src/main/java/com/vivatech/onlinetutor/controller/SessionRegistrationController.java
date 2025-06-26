@@ -6,6 +6,7 @@ import com.vivatech.onlinetutor.dto.SessionRegistrationRequestDto;
 import com.vivatech.onlinetutor.helper.AppEnums;
 import com.vivatech.onlinetutor.helper.Constants;
 import com.vivatech.onlinetutor.model.SessionRegistration;
+import com.vivatech.onlinetutor.repository.MumlyTutorPaymentRepository;
 import com.vivatech.onlinetutor.service.SessionRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,8 @@ public class SessionRegistrationController {
     
     @Autowired
     private SessionRegistrationService sessionRegistrationService;
+    @Autowired
+    private MumlyTutorPaymentRepository mumlyTutorPaymentRepository;
 
     // Create a new session registration
     @PostMapping
@@ -61,5 +64,11 @@ public class SessionRegistrationController {
                                                                               @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
                                                                               @RequestParam(required = false, defaultValue = Constants.PAGE_SIZE) Integer pageSize) {
         return sessionRegistrationService.getEnrolledSessionStudents(sessionId, pageNumber, pageSize);
+    }
+
+    @GetMapping("/receive-cash-payment")
+    public Response receiveCashPayment(@RequestParam String referenceNo) {
+        sessionRegistrationService.receiveCashPayment(referenceNo);
+        return Response.builder().status(AppEnums.PaymentStatus.SUCCESS.toString()).message("Payment received successfully").build();
     }
 }

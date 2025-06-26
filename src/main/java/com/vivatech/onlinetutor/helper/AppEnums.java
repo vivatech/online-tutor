@@ -10,11 +10,11 @@ public class AppEnums {
     }
 
     public enum PaymentMode {
-        CASH, DIGITAL_WALLET, BNPL, BANK_TRANSFER, MPESA, CARD, INTA_SEND
+        CASH, BANK_TRANSFER, MPESA
     }
 
     public enum PaymentStatus {
-        SUCCESS, FAILED, PENDING, CANCELLED, REFUND, REFUND_FAILED
+        SUCCESS, FAILED, PENDING, CANCELLED, REFUND, REFUND_FAILED, COMPLETE
     }
 
     public enum NotificationType {
@@ -28,6 +28,10 @@ public class AppEnums {
 
     public enum MeetingAggregator {
         DYTE, ZOOM
+    }
+
+    public enum PaymentBreakUp {
+        GROSS_REVENUE, COMMISSION, NET_REVENUE
     }
 
 }
