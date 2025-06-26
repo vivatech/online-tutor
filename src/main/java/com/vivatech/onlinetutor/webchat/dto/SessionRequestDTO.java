@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -84,4 +85,6 @@ public class SessionRequestDTO {
 
     @NotNull(message = "Subject is required")
     private String subject;
+
+    private MultipartFile sessionCoverImageFile;
 }

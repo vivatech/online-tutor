@@ -29,14 +29,15 @@ public class AttendanceController {
     @PostMapping("/submit")
     public ResponseEntity<?> submitAttendance(@RequestBody AttendanceRequestDto request) {
         for (AttendanceDto dto : request.getAttendance()) {
-            Optional<SessionRegistration> registrationOpt = sessionRegistrationRepository.findById(dto.getSessionRegistrationId());
-            if (registrationOpt.isPresent()) {
-                Attendance attendance = new Attendance();
-                attendance.setDate(request.getDate());
-                attendance.setPresent(dto.getPresent());
-                attendance.setSessionRegistration(registrationOpt.get());
-                attendanceRepository.save(attendance);
-            }
+            SessionRegistration registrationOpt = sessionRegistrationRepository.findById(dto.getSessionRegistrationId()).orElse(null);
+            if (registrationOpt == null) continue;
+            Attendance existingAttendance = attendanceRepository.findBySessionRegistrationIdAndDate(dto.getSessionRegistrationId(), request.getDate());
+            if (existingAttendance != null) continue;
+            Attendance attendance = new Attendance();
+            attendance.setDate(request.getDate());
+            attendance.setPresent(dto.getPresent());
+            attendance.setSessionRegistration(registrationOpt);
+            attendanceRepository.save(attendance);
         }
         return ResponseEntity.ok("Attendance submitted successfully");
     }

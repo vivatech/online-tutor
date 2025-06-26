@@ -1,13 +1,27 @@
 package com.vivatech.onlinetutor.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vivatech.mumly_event.helper.EventConstants;
 import com.vivatech.onlinetutor.dto.PaginationResponse;
+import com.vivatech.onlinetutor.dto.Response;
 import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
+import com.vivatech.onlinetutor.helper.AppEnums;
+import com.vivatech.onlinetutor.helper.Constants;
 import com.vivatech.onlinetutor.helper.CustomUtils;
+import com.vivatech.onlinetutor.model.SessionMeeting;
+import com.vivatech.onlinetutor.model.SessionRegistration;
+import com.vivatech.onlinetutor.repository.SessionMeetingRepository;
+import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
+import com.vivatech.onlinetutor.videochat.MeetingResponseDto;
+import com.vivatech.onlinetutor.videochat.VideoChatDto;
+import com.vivatech.onlinetutor.videochat.VideoChatProcessor;
 import com.vivatech.onlinetutor.webchat.model.User;
 import com.vivatech.onlinetutor.webchat.repository.UserRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,26 +37,37 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Service
 public class SessionService {
+    private final SessionRegistrationRepository sessionRegistrationRepository;
+    private final SessionMeetingRepository sessionMeetingRepository;
     private final UserRepository userRepository;
     private final TutorSessionRepository tutorSessionRepository;
+    private final VideoChatProcessor videoChatProcessor;
+    private final FileStorageService fileStorageService;
 
-    public SessionResponseDTO createSession(SessionRequestDTO requestDTO) {
+    public SessionResponseDTO createSession(SessionRequestDTO requestDTO) throws IOException {
         log.info("Creating new session with title: {}", requestDTO.getSessionTitle());
 
         TutorSession session = mapToEntity(requestDTO);
+        // Save uploaded files
+        if (requestDTO.getSessionCoverImageFile() != null && session.getSessionCoverImageFile() == null) {
+            String extension = fileStorageService.getFileExtension(Objects.requireNonNull(requestDTO.getSessionCoverImageFile().getOriginalFilename()));
+            String fileName = UUID.randomUUID() + "." + extension;
+            session.setSessionCoverImageFile(fileName);
+        }
         TutorSession savedSession = tutorSessionRepository.save(session);
+        if (requestDTO.getSessionCoverImageFile() != null) {
+            fileStorageService.storeFile(requestDTO.getSessionCoverImageFile(), session.getSessionCoverImageFile(), "");
+        }
+        createSessionMeeting(savedSession);
 
         log.info("Successfully created session with ID: {}", savedSession.getId());
         return mapToResponseDTO(savedSession);
     }
 
-    public SessionResponseDTO getSessionById(Integer id) {
-        log.info("Fetching session with ID: {}", id);
+    public TutorSession getSessionById(Integer id) {
 
-        TutorSession session = tutorSessionRepository.findById(id)
+        return tutorSessionRepository.findById(id)
                 .orElseThrow(() -> new OnlineTutorExceptionHandler("Session not found with ID: " + id));
-
-        return mapToResponseDTO(session);
     }
 
     public List<SessionResponseDTO> getAllSessions(String userName, LocalDate viewDate) {
@@ -52,6 +77,11 @@ public class SessionService {
         List<TutorSession> sessions = tutorSessionRepository
                 .findByCreatedByAndSessionEndDateGreaterThanEqual(userRepository.findByUsername(userName)
                         .orElseThrow(() -> new OnlineTutorExceptionHandler("User not found")), today);
+        return getUpcomingMeeting(sessions, today);
+
+    }
+
+    private List<SessionResponseDTO> getUpcomingMeeting(List<TutorSession> sessions, LocalDate today) {
         // Step 1: filter the session by daily basic
         List<TutorSession> sessionList = sessions.stream()
                 .filter(ele -> ele.getRecurrenceFrequency() == TutorSession.RecurrenceFrequency.DAILY)
@@ -73,12 +103,16 @@ public class SessionService {
 
     public void deleteSession(Integer id) {
         log.info("Deleting session with ID: {}", id);
-
-        if (!tutorSessionRepository.existsById(id)) {
-            throw new OnlineTutorExceptionHandler("Session not found with ID: " + id);
+        TutorSession tutorSession = tutorSessionRepository.findById(id).orElseThrow(() -> new OnlineTutorExceptionHandler("Session not found with ID: " + id));
+        SessionMeeting sessionMeeting = sessionMeetingRepository.findByTutorSession(tutorSession);
+        if (sessionMeeting != null) {
+            VideoChatDto videoChatDto = new VideoChatDto();
+            videoChatDto.setMeetingId(sessionMeeting.getMeetingId());
+            videoChatProcessor.deleteMeeting(videoChatDto, AppEnums.MeetingAggregator.ZOOM);
+            sessionMeetingRepository.delete(sessionMeeting);
         }
-
-        tutorSessionRepository.deleteById(id);
+        fileStorageService.deleteFile("", tutorSession.getSessionCoverImageFile());
+        tutorSessionRepository.delete(tutorSession);
         log.info("Successfully deleted session with ID: {}", id);
     }
 
@@ -190,6 +224,46 @@ public class SessionService {
         if (session.getUpdatedAt() != null) {
             dto.setUpdatedAt(session.getUpdatedAt());
         }
+        SessionMeeting sessionMeeting = sessionMeetingRepository.findByTutorSession(session);
+        if (sessionMeeting != null) {
+            MeetingResponseDto meetingResponseDto = MeetingResponseDto.builder()
+                    .meetingId(sessionMeeting.getMeetingId())
+                    .hostUrl(sessionMeeting.getHostUrl())
+                    .joinUrl(sessionMeeting.getJoinUrl())
+                    .build();
+            dto.setMeetingDto(meetingResponseDto);
+        }
         return dto;
+    }
+
+    private void createSessionMeeting(TutorSession savedSession) {
+        SessionMeeting sessionMeeting = sessionMeetingRepository.findByTutorSession(savedSession);
+        if (sessionMeeting != null) return;
+        VideoChatDto videoChatDto = VideoChatDto.builder()
+                .meetingTitle(savedSession.getSessionTitle())
+                .meetingStartDate(savedSession.getSessionDate())
+                .meetingStartTime(savedSession.getStartTime().toString())
+                .meetingDuration(savedSession.getDurationMinutes())
+                .createdBy(savedSession.getCreatedBy().getUsername())
+                .isRecurring(savedSession.getIsRecurring())
+                .build();
+        if (savedSession.getIsRecurring()) {
+            videoChatDto.setMeetingEndDate(savedSession.getSessionEndDate());
+            videoChatDto.setMeetingEndTime(savedSession.getEndTime().toString());
+        }
+        Response meetingResponse = videoChatProcessor.createMeeting(videoChatDto, AppEnums.MeetingAggregator.ZOOM);
+        MeetingResponseDto dto = CustomUtils.readJsonStringToObject(meetingResponse.getData(), MeetingResponseDto.class);
+        SessionMeeting meeting = new SessionMeeting();
+        meeting.setTutorSession(savedSession);
+        meeting.setHostUrl(dto.getHostUrl());
+        meeting.setJoinUrl(dto.getJoinUrl());
+        meeting.setMeetingId(dto.getMeetingId());
+        sessionMeetingRepository.save(meeting);
+    }
+
+    public List<SessionResponseDTO> findSessionListByPhoneNumber(String phoneNumber) {
+        List<SessionRegistration> registrationList = sessionRegistrationRepository.findByStudentPhoneContaining(phoneNumber);
+        List<TutorSession> tutorSessions = registrationList.stream().map(SessionRegistration::getRegisteredSession).toList();
+        return getUpcomingMeeting(tutorSessions, null);
     }
 }

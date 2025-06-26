@@ -74,7 +74,7 @@ public class FileController {
             Map<String, String> response = new HashMap<>();
             response.put("filename", uniqueFilename);
             response.put("originalName", originalFilename);
-            response.put("url", "/api/files/download/" + uniqueFilename);
+            response.put("url", "/api/v1/tutor/files/download/" + uniqueFilename);
             response.put("size", String.valueOf(file.getSize()));
             response.put("contentType", file.getContentType());
 
@@ -83,7 +83,7 @@ public class FileController {
 
         } catch (IOException e) {
             log.error("Error uploading file: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to upload file: " + e.getMessage());
+            throw new OnlineTutorExceptionHandler("Failed to upload file: " + e.getMessage());
         }
     }
 
@@ -95,7 +95,7 @@ public class FileController {
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists() || !resource.isReadable()) {
-                throw new RuntimeException("File not found: " + filename);
+                throw new OnlineTutorExceptionHandler("File not found: " + filename);
             }
 
             // Determine content type
@@ -111,10 +111,10 @@ public class FileController {
 
         } catch (MalformedURLException e) {
             log.error("Error downloading file: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to download file: " + e.getMessage());
+            throw new OnlineTutorExceptionHandler("Failed to download file: " + e.getMessage());
         } catch (IOException e) {
             log.error("Error determining content type: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to download file: " + e.getMessage());
+            throw new OnlineTutorExceptionHandler("Failed to download file: " + e.getMessage());
         }
     }
 
@@ -128,7 +128,7 @@ public class FileController {
             return ResponseEntity.noContent().build();
         } catch (IOException e) {
             log.error("Error deleting file: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to delete file: " + e.getMessage());
+            throw new OnlineTutorExceptionHandler("Failed to delete file: " + e.getMessage());
         }
     }
 }

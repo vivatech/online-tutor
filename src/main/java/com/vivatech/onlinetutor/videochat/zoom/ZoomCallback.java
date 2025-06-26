@@ -1,4 +1,4 @@
-package com.vivatech.onlinetutor.videochat;
+package com.vivatech.onlinetutor.videochat.zoom;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

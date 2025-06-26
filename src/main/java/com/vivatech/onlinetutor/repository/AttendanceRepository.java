@@ -24,6 +24,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
 
     List<Attendance> findBySessionRegistrationId(Integer participantId);
 
+    Attendance findBySessionRegistrationIdAndDate(Integer participantId, LocalDate date);
+
     List<Attendance> findBySessionRegistrationIn(List<SessionRegistration> registrations);
 
     @Query("SELECT a.date, " +

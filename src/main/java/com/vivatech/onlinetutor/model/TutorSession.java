@@ -124,6 +124,8 @@ public class TutorSession {
 
     private List<String> dayOfWeek;
 
+    private String sessionCoverImageFile;
+
     // Enums
     public enum SessionType {
         ONE_ON_ONE,

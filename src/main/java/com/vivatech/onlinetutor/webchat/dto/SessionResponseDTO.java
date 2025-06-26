@@ -1,6 +1,7 @@
 package com.vivatech.onlinetutor.webchat.dto;
 
 import com.vivatech.onlinetutor.model.TutorSession;
+import com.vivatech.onlinetutor.videochat.MeetingResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,4 +43,5 @@ public class SessionResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<LocalDate> upcomingDates = new ArrayList<>();
+    private MeetingResponseDto meetingDto;
 }

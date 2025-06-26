@@ -16,4 +16,5 @@ public interface SessionRegistrationRepository extends JpaRepository<SessionRegi
 
     SessionRegistration findByRegisteredSessionIdAndStudentPhone(Integer sessionId, String studentPhone);
 
+    List<SessionRegistration> findByStudentPhoneContaining(String phoneNumber);
 }

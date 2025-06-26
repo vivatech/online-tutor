@@ -2,6 +2,7 @@ package com.vivatech.onlinetutor.controller;
 
 import com.vivatech.onlinetutor.dto.PaginationResponse;
 import com.vivatech.onlinetutor.helper.Constants;
+import com.vivatech.onlinetutor.model.TutorSession;
 import com.vivatech.onlinetutor.webchat.dto.SessionRequestDTO;
 import com.vivatech.onlinetutor.webchat.dto.SessionResponseDTO;
 import com.vivatech.onlinetutor.service.SessionService;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -37,14 +39,14 @@ public class TutorSessionController {
                     )
             )
     )
-    public SessionResponseDTO createSession(@Valid @ModelAttribute SessionRequestDTO requestDTO) {
+    public SessionResponseDTO createSession(@Valid @ModelAttribute SessionRequestDTO requestDTO) throws IOException {
         log.info("POST /api/v1/sessions - Creating new session");
         return sessionService.createSession(requestDTO);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get session by ID")
-    public SessionResponseDTO getSessionById(@PathVariable Integer id) {
+    public TutorSession getSessionById(@PathVariable Integer id) {
         return sessionService.getSessionById(id);
     }
 
@@ -71,5 +73,11 @@ public class TutorSessionController {
             @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(required = false, defaultValue = Constants.PAGE_SIZE) Integer size) {
         return sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, pageNumber, size);
+    }
+
+    @GetMapping("/view-session-by-phone-number/{phoneNumber}")
+    @Operation(summary = "Search student sessions by providing phone number")
+    public List<SessionResponseDTO> viewSessionByPhone(@PathVariable String phoneNumber) {
+        return sessionService.findSessionListByPhoneNumber(phoneNumber);
     }
 }

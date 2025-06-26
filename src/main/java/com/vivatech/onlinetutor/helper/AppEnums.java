@@ -26,4 +26,8 @@ public class AppEnums {
         MUMLY_TUTOR;
     }
 
+    public enum MeetingAggregator {
+        DYTE, ZOOM
+    }
+
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.io.StreamCorruptedException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
@@ -35,6 +36,12 @@ public class GlobalExceptionHandler {
         String errorMessage = ex.getMessage();
         log.error("Exception: ", ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+    }
+
+    @ExceptionHandler(ZoomAPIExceptionHandler.class)
+    public ResponseEntity<String> handleOnlineTutorException(ZoomAPIExceptionHandler ex) {
+        log.error("Zoom API Exception: ", ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

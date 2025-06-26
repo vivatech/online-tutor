@@ -1,7 +1,9 @@
 package com.vivatech.onlinetutor.helper;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vivatech.mumly_event.exception.CustomExceptionHandler;
 import com.vivatech.onlinetutor.dto.PaginationResponse;
 import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -17,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CustomUtils {
@@ -283,6 +290,21 @@ public class CustomUtils {
         return weekdays;
     }
 
+    public static Date convertLocalDateAndTimeToDate(LocalDate date, String time) {
+        if (date == null || time.isEmpty()) {
+            throw new CustomExceptionHandler("Date and time must not be null or empty");
+        }
+
+        // Parse time string to LocalTime
+        LocalTime localTime = LocalTime.parse(time); // default format is HH:mm
+
+        // Combine LocalDate and LocalTime into LocalDateTime
+        LocalDateTime localDateTime = LocalDateTime.of(date, localTime);
+
+        // Convert LocalDateTime to java.util.Date
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
 
     public static String removeJsonDelimiters(String jsonRequest) {
         if (jsonRequest == null || jsonRequest.isEmpty()) {
@@ -302,6 +324,16 @@ public class CustomUtils {
         }
         return jsonInString;
     }
+
+    public static <T> T readJsonStringToObject(Object jsonInString, Class<T> clazz) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(jsonInString.toString(), clazz);
+        } catch (JsonProcessingException e) {
+            throw new CustomExceptionHandler(e.getMessage());
+        }
+    }
+
 
     public static <T> Page<T> convertListToPage(List<T> dataList, int pageNumber, int pageSize) {
 
