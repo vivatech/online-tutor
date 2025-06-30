@@ -3,6 +3,8 @@ package com.vivatech.onlinetutor.controller;
 import com.vivatech.onlinetutor.dto.StudentFeedbackRequest;
 import com.vivatech.onlinetutor.dto.StudentFeedbackResponse;
 import com.vivatech.onlinetutor.service.StudentFeedbackService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/tutor/student-feedback")
+@Tag(name = "Student Feedback", description = "CRUD APIs for managing student feedback")
 public class StudentFeedbackController {
 
     @Autowired
@@ -21,6 +24,7 @@ public class StudentFeedbackController {
     /**
      * Create new student feedback
      */
+    @Operation(summary = "Create new student feedback", description = "The online tutor will create this feedback for the student")
     @PostMapping
     public StudentFeedbackResponse createFeedback(@Valid @RequestBody StudentFeedbackRequest request) {
         return studentFeedbackService.createFeedback(request);
@@ -29,6 +33,7 @@ public class StudentFeedbackController {
     /**
      * Update existing student feedback
      */
+    @Operation(summary = "Update existing student feedback", description = "The online tutor will update this feedback for the student")
     @PutMapping("/{feedbackId}")
     public ResponseEntity<StudentFeedbackResponse> updateFeedback(
             @PathVariable Integer feedbackId,
@@ -40,6 +45,8 @@ public class StudentFeedbackController {
     /**
      * Get feedback by feedback ID
      */
+    @Operation(summary = "Get feedback by feedback ID",
+            description = "The online tutor will get this feedback for the student by passing the feedback ID in path variable")
     @GetMapping("/{feedbackId}")
     public ResponseEntity<StudentFeedbackResponse> getFeedbackById(@PathVariable Integer feedbackId) {
         try {
@@ -50,11 +57,14 @@ public class StudentFeedbackController {
         }
     }
 
+    @Operation(summary = "Get feedback by registration ID",
+            description = "The parent or student can view their feedback by passing session registration ID")
     @GetMapping("/find-by-registration-id/{registrationId}")
     public StudentFeedbackResponse getFeedbackByRegistrationId(@PathVariable Integer registrationId) {
         return studentFeedbackService.getFeedbackByRegistrationId(registrationId);
     }
 
+    @Operation(summary = "Delete student feedback", description = "The online tutor will delete this feedback for the student")
     @DeleteMapping("/{feedbackId}")
     public ResponseEntity<Void> deleteFeedback(@PathVariable Integer feedbackId) {
         return studentFeedbackService.deleteFeedback(feedbackId);

@@ -1,6 +1,7 @@
 package com.vivatech.onlinetutor.repository;
 
 import com.vivatech.onlinetutor.model.SessionRegistration;
+import com.vivatech.onlinetutor.model.TutorSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,8 @@ public interface SessionRegistrationRepository extends JpaRepository<SessionRegi
     List<SessionRegistration> findByStudentEmail(String email);
 
     List<SessionRegistration> findByRegisteredSessionId(Integer sessionId);
+
+    Integer countByRegisteredSessionIn(List<TutorSession> sessionId);
 
     SessionRegistration findByRegisteredSessionIdAndStudentPhone(Integer sessionId, String studentPhone);
 

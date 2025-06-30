@@ -56,4 +56,8 @@ public interface TutorSessionRepository extends JpaRepository<TutorSession, Inte
     List<TutorSession> findByCreatedByAndSessionEndDateGreaterThanEqual(User tutorUser, LocalDate endDate);
 
     List<TutorSession> findBySessionEndDateGreaterThanEqual(LocalDate now);
+
+    List<TutorSession> findByCreatedByAndStatus(User user, String status);
+
+    List<TutorSession> findByCreatedByAndSessionDateGreaterThanEqual(User user, LocalDate localDate);
 }

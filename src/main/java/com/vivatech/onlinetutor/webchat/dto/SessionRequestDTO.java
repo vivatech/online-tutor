@@ -43,8 +43,8 @@ public class SessionRequestDTO {
     private String timeZone;
 
     @NotNull(message = "Duration is required")
-    @Min(value = 1, message = "Duration must be at least 1 minute")
-    private Integer durationMinutes;
+    @Min(value = 1, message = "Duration must be at least 1 hour")
+    private Integer duration;
 
     private Boolean isRecurring = false;
 

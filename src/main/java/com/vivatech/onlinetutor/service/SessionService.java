@@ -154,7 +154,7 @@ public class SessionService {
         session.setStartTime(dto.getStartTime());
         session.setEndTime(dto.getEndTime());
         session.setTimeZone(dto.getTimeZone());
-        session.setDurationMinutes(dto.getDurationMinutes());
+        session.setDurationMinutes(dto.getDuration());
         session.setIsRecurring(dto.getIsRecurring());
         session.setSubject(dto.getSubject());
         session.setMaxStudents(dto.getMaxStudents());
@@ -168,6 +168,8 @@ public class SessionService {
         session.setDiscountCoupon(dto.getDiscountCoupon());
         session.setPaymentGatewayLinked(dto.getPaymentGatewayLinked());
         session.setAdminApprovalRequired(dto.getAdminApprovalRequired());
+        if (dto.getAdminApprovalRequired()) session.setStatus(AppEnums.EventStatus.PENDING.toString());
+        else session.setStatus(AppEnums.EventStatus.ACTIVE.toString());
         session.setVisibility(dto.getVisibility());
         session.setCreatedBy(createdBy);
         session.setRecurrenceFrequency(dto.getRecurrenceFrequency());

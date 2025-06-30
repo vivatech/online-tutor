@@ -11,17 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -357,5 +350,22 @@ public class CustomUtils {
 
     public static String generateRandomString() {
         return new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+    }
+
+    public static Map<String, Double> initializeEmptyMonthMap() {
+        Map<String, Double> emptyMap = new LinkedHashMap<>();
+        emptyMap.put("Jan", 0.0);
+        emptyMap.put("Feb", 0.0);
+        emptyMap.put("Mar", 0.0);
+        emptyMap.put("Apr", 0.0);
+        emptyMap.put("May", 0.0);
+        emptyMap.put("Jun", 0.0);
+        emptyMap.put("Jul", 0.0);
+        emptyMap.put("Aug", 0.0);
+        emptyMap.put("Sep", 0.0);
+        emptyMap.put("Oct", 0.0);
+        emptyMap.put("Nov", 0.0);
+        emptyMap.put("Dec", 0.0);
+        return emptyMap;
     }
 }

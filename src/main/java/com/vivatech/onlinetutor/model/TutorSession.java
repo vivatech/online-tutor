@@ -126,6 +126,9 @@ public class TutorSession {
 
     private String sessionCoverImageFile;
 
+    @Column(name = "status", nullable = false, columnDefinition = "varchar(20) default 'ACTIVE'")
+    private String status = "ACTIVE";
+
     // Enums
     public enum SessionType {
         ONE_ON_ONE,
