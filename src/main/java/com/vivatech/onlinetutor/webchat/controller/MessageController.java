@@ -1,5 +1,6 @@
 package com.vivatech.onlinetutor.webchat.controller;
 
+import com.vivatech.onlinetutor.webchat.dto.ChatItem;
 import com.vivatech.onlinetutor.webchat.dto.MessageDto;
 import com.vivatech.onlinetutor.webchat.dto.SendMessageRequest;
 import com.vivatech.onlinetutor.webchat.service.MessageService;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/tutor/messages")
@@ -80,5 +82,12 @@ public class MessageController {
     public ResponseEntity<Void> markMessagesAsRead(@RequestBody List<Long> messageIds) {
         messageService.markMessagesAsRead(messageIds);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/get-recent-chat-user-list/{userId}")
+    @Operation(summary = "Get recent chat user list")
+    public ResponseEntity<Set<ChatItem>> getRecentChatUserList(@PathVariable Long userId) {
+        Set<ChatItem> messages = messageService.getChatUserList(userId);
+        return ResponseEntity.ok(messages);
     }
 }

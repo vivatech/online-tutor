@@ -6,6 +6,7 @@ import com.vivatech.onlinetutor.service.DashboardService;
 import com.vivatech.onlinetutor.webchat.model.User;
 import com.vivatech.onlinetutor.webchat.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,9 +23,9 @@ public class DashboardController {
     private UserRepository userRepository;
 
     @GetMapping("/{username}")
-    public DashboardResponse dashboard(@PathVariable String username) {
+    public ResponseEntity<DashboardResponse> dashboard(@PathVariable String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new OnlineTutorExceptionHandler("User not found."));
-        return DashboardResponse.builder()
+        DashboardResponse dashboardResponse = DashboardResponse.builder()
                 .completedSessions(dashboardService.findCompletedSession(user))
                 .inProgressSessions(dashboardService.findInProgressSession(user))
                 .grossRevenue(dashboardService.calculateGrossRevenue(user))
@@ -32,5 +33,6 @@ public class DashboardController {
                 .upcomingSessions(dashboardService.upcomingSessions(user))
                 .overview(dashboardService.sessionOverview(user))
                 .build();
+        return ResponseEntity.ok(dashboardResponse);
     }
 }

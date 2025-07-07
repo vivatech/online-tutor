@@ -13,12 +13,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/session-registrations")
+@RequestMapping("/api/v1/tutor/session-registrations")
 @Tag(name = "Session Registration", description = "APIs for managing session registrations")
 public class SessionRegistrationController {
     
@@ -30,16 +31,19 @@ public class SessionRegistrationController {
     // Create a new session registration
     @Operation(summary = "Create a new session registration")
     @PostMapping
-    public Response createSessionRegistration(@RequestBody SessionRegistrationRequestDto sessionRegistration) {
-        return sessionRegistrationService.createSessionRegistration(sessionRegistration);
+    public ResponseEntity<String> createSessionRegistration(@RequestBody SessionRegistrationRequestDto sessionRegistration) {
+        Response response = sessionRegistrationService.createSessionRegistration(sessionRegistration);
+        if (response.getStatus().equalsIgnoreCase(AppEnums.EventStatus.FAILED.toString())) return new ResponseEntity<>(response.getMessage(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response.getMessage(), HttpStatus.CREATED);
     }
 
     // Get all session registrations
     @Operation(summary = "Get all session registrations")
     @GetMapping
-    public ResponseEntity<List<SessionRegistration>> getAllSessionRegistrations() {
+    @Transactional
+    public List<SessionRegistration> getAllSessionRegistrations() {
         List<SessionRegistration> registrations = sessionRegistrationService.getAllSessionRegistrations();
-        return new ResponseEntity<>(registrations, HttpStatus.OK);
+        return registrations;
     }
 
     // Get session registration by ID
@@ -63,22 +67,26 @@ public class SessionRegistrationController {
 
     @Operation(summary = "Update session registration status by passing registration ID and status")
     @PatchMapping("/{id}/status/{status}")
-    public Response updateSessionRegistrationStatus(@PathVariable Integer id, @PathVariable AppEnums.EventStatus status) {
-        return sessionRegistrationService.updateSessionRegistrationStatus(id, status);
+    public ResponseEntity<String> updateSessionRegistrationStatus(@PathVariable Integer id, @PathVariable AppEnums.EventStatus status) {
+        Response response = sessionRegistrationService.updateSessionRegistrationStatus(id, status);
+        if (response.getStatus().equalsIgnoreCase(AppEnums.EventStatus.FAILED.toString())) return new ResponseEntity<>(response.getMessage(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response.getMessage(), HttpStatus.OK);
     }
 
     @Operation(summary = "Get enrolled session students by passing session ID")
     @GetMapping("/enrolled-students/{sessionId}")
-    public PaginationResponse<SessionRegistration> getEnrolledSessionStudents(@PathVariable Integer sessionId,
+    public ResponseEntity<PaginationResponse<SessionRegistration>> getEnrolledSessionStudents(@PathVariable Integer sessionId,
                                                                               @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
                                                                               @RequestParam(required = false, defaultValue = Constants.PAGE_SIZE) Integer pageSize) {
-        return sessionRegistrationService.getEnrolledSessionStudents(sessionId, pageNumber, pageSize);
+        PaginationResponse<SessionRegistration> enrolledSessionStudents = sessionRegistrationService.getEnrolledSessionStudents(sessionId, pageNumber, pageSize);
+        if (enrolledSessionStudents.getContent().isEmpty()) return ResponseEntity.noContent().build();
+        return new ResponseEntity<>(enrolledSessionStudents, HttpStatus.OK);
     }
 
     @Operation(summary = "Receive cash payment")
     @GetMapping("/receive-cash-payment")
-    public Response receiveCashPayment(@RequestParam String referenceNo) {
+    public ResponseEntity<String> receiveCashPayment(@RequestParam String referenceNo) {
         sessionRegistrationService.receiveCashPayment(referenceNo);
-        return Response.builder().status(AppEnums.PaymentStatus.SUCCESS.toString()).message("Payment received successfully").build();
+        return ResponseEntity.ok("Payment received successfully");
     }
 }

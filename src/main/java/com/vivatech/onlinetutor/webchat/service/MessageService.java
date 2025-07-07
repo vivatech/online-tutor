@@ -1,7 +1,9 @@
 package com.vivatech.onlinetutor.webchat.service;
 
+import com.vivatech.onlinetutor.webchat.dto.ChatItem;
 import com.vivatech.onlinetutor.webchat.dto.MessageDto;
 import com.vivatech.onlinetutor.webchat.dto.SendMessageRequest;
+import com.vivatech.onlinetutor.webchat.dto.UserDto;
 import com.vivatech.onlinetutor.webchat.model.ChatGroup;
 import com.vivatech.onlinetutor.webchat.model.Message;
 import com.vivatech.onlinetutor.webchat.model.User;
@@ -15,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -122,6 +125,32 @@ public class MessageService {
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    public Set<ChatItem> getChatUserList(Long userId) {
+        List<MessageDto> messages = messageRepository.findRecentDirectMessages(userId)
+                .stream()
+                .map(this::convertToDto)
+                .toList();
+        Set<ChatItem> chatItems = new HashSet<>();
+        Map<Long, Integer> unreadCount = new HashMap<>();
+        messages.forEach(message -> {
+            UserDto otherUserId = Objects.equals(message.getSender().getId(), userId) ? message.getRecipient() : message.getSender();
+            if (otherUserId != null) {
+                unreadCount.put(otherUserId.getId(), unreadCount.getOrDefault(otherUserId.getId(), 0) + 1);
+                ChatItem chatItem = ChatItem.builder()
+                        .id(otherUserId.getId())
+                        .name(otherUserId.getFullName())
+                        .avatar(otherUserId.getProfilePicture())
+                        .build();
+                chatItems.add(chatItem);
+            }
+        });
+        chatItems.forEach(chatItem -> {
+            chatItem.setUnreadCount(unreadCount.getOrDefault(chatItem.getId(), 0));
+            chatItem.setType("direct-message");
+        });
+        return chatItems;
     }
     
     private MessageDto convertToDto(Message message) {

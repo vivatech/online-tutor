@@ -149,7 +149,7 @@ public class ZoomIntegrationImpl implements VideoChatInterface {
                     videoChatDto.getMeetingEndDate(),
                     videoChatDto.getMeetingEndTime()
             );
-            ZoomRecurrenceDto recurrenceDto = new ZoomRecurrenceDto(endTime, ZoomConstants.CREATE_MEETING_TYPE_RECURRING_FIXED_TIME);
+            ZoomRecurrenceDto recurrenceDto = new ZoomRecurrenceDto(endTime, ZoomConstants.CREATE_MEETING_RECURRENCE_TYPE_DAILY);
             request.setRecurrence(recurrenceDto);
         }
 

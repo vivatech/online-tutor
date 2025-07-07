@@ -256,7 +256,7 @@ public class SessionService {
             videoChatDto.setMeetingEndTime(savedSession.getEndTime().toString());
         }
         Response meetingResponse = videoChatProcessor.createMeeting(videoChatDto, AppEnums.MeetingAggregator.ZOOM);
-        MeetingResponseDto dto = CustomUtils.readJsonStringToObject(meetingResponse.getData(), MeetingResponseDto.class);
+        MeetingResponseDto dto = (MeetingResponseDto) meetingResponse.getData();
         SessionMeeting meeting = new SessionMeeting();
         meeting.setTutorSession(savedSession);
         meeting.setHostUrl(dto.getHostUrl());

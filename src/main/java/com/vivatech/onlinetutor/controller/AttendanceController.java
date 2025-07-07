@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/tutor/attendance")
@@ -43,7 +42,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/history/summary")
-    public AttendanceSummaryDto getAttendanceSummary(@RequestParam Integer registrationId,
+    public ResponseEntity<AttendanceSummaryDto> getAttendanceSummary(@RequestParam Integer registrationId,
                                                      @RequestParam LocalDate startDate,
                                                      @RequestParam LocalDate endDate) {
         List<Object[]> results = attendanceRepository.getAttendanceSummary(registrationId, startDate, endDate);
@@ -59,15 +58,15 @@ public class AttendanceController {
         int totalPresent = attendances.stream().mapToInt(ele -> ele.getPresent() ? 1 : 0).sum();
         int totalAbsent = attendances.stream().mapToInt(ele -> !ele.getPresent() ? 1 : 0).sum();
 
-        return new AttendanceSummaryDto(totalPresent, totalAbsent, statusList);
+        return ResponseEntity.ok(new AttendanceSummaryDto(totalPresent, totalAbsent, statusList));
     }
 
     @GetMapping("/history")
-    public List<AttendanceStatus> getAttendanceHistory(@RequestParam Integer sessionId,
+    public ResponseEntity<List<AttendanceStatus>> getAttendanceHistory(@RequestParam Integer sessionId,
                                                        @RequestParam LocalDate startDate,
                                                        @RequestParam LocalDate endDate) {
         List<Object[]> results = attendanceRepository.getAttendanceListByEvent(sessionId, startDate, endDate);
-        return results.stream()
+        List<AttendanceStatus> statusList = results.stream()
                 .map(obj -> AttendanceStatus.builder()
                         .date((LocalDate) obj[0])
                         .presentCount(((Number) obj[1]).intValue())
@@ -75,5 +74,7 @@ public class AttendanceController {
                         .name((String) obj[3])
                         .email((String) obj[4])
                         .build()).toList();
+        if (statusList.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(statusList);
     }
 }

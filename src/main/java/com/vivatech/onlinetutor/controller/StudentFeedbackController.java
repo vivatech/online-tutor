@@ -1,5 +1,6 @@
 package com.vivatech.onlinetutor.controller;
 
+import com.vivatech.onlinetutor.dto.SessionSummaryDto;
 import com.vivatech.onlinetutor.dto.StudentFeedbackRequest;
 import com.vivatech.onlinetutor.dto.StudentFeedbackResponse;
 import com.vivatech.onlinetutor.service.StudentFeedbackService;
@@ -26,8 +27,9 @@ public class StudentFeedbackController {
      */
     @Operation(summary = "Create new student feedback", description = "The online tutor will create this feedback for the student")
     @PostMapping
-    public StudentFeedbackResponse createFeedback(@Valid @RequestBody StudentFeedbackRequest request) {
-        return studentFeedbackService.createFeedback(request);
+    public ResponseEntity<StudentFeedbackResponse> createFeedback(@Valid @RequestBody StudentFeedbackRequest request) {
+        StudentFeedbackResponse feedback = studentFeedbackService.createFeedback(request);
+        return new ResponseEntity<>(feedback, HttpStatus.CREATED);
     }
 
     /**
@@ -60,8 +62,18 @@ public class StudentFeedbackController {
     @Operation(summary = "Get feedback by registration ID",
             description = "The parent or student can view their feedback by passing session registration ID")
     @GetMapping("/find-by-registration-id/{registrationId}")
-    public StudentFeedbackResponse getFeedbackByRegistrationId(@PathVariable Integer registrationId) {
-        return studentFeedbackService.getFeedbackByRegistrationId(registrationId);
+    public ResponseEntity<List<StudentFeedbackResponse>> getFeedbackByRegistrationId(@PathVariable Integer registrationId) {
+        List<StudentFeedbackResponse> feedback = studentFeedbackService.getFeedbackByRegistrationId(registrationId);
+        if (feedback.isEmpty()) return ResponseEntity.noContent().build();
+        return new ResponseEntity<>(feedback, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get feedback summary by registration ID",
+            description = "The parent or student can view their feedback summary chart by passing session registration ID")
+    @GetMapping("/find-summary-by-registration-id/{registrationId}")
+    public ResponseEntity<SessionSummaryDto> getFeedbackSummaryByRegistrationId(@PathVariable Integer registrationId) {
+        SessionSummaryDto feedback = studentFeedbackService.getSessionSummariesByRegistrationId(registrationId);
+        return new ResponseEntity<>(feedback, HttpStatus.OK);
     }
 
     @Operation(summary = "Delete student feedback", description = "The online tutor will delete this feedback for the student")

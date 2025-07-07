@@ -74,7 +74,7 @@ public class FileController {
             Map<String, String> response = new HashMap<>();
             response.put("filename", uniqueFilename);
             response.put("originalName", originalFilename);
-            response.put("url", "/api/v1/tutor/files/download/" + uniqueFilename);
+            response.put("url", uniqueFilename);
             response.put("size", String.valueOf(file.getSize()));
             response.put("contentType", file.getContentType());
 

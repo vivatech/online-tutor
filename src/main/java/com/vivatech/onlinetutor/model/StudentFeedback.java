@@ -19,8 +19,8 @@ public class StudentFeedback {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne
-    @JoinColumn(name = "session_registration_id", nullable = false, unique = true)
+    @ManyToOne
+    @JoinColumn(name = "session_registration_id", nullable = false)
     private SessionRegistration sessionRegistration;
 
     @ManyToOne
@@ -128,7 +128,7 @@ public class StudentFeedback {
     }
 
     public enum UnderstandingLevel {
-        EXCELLENT, GOOD, AVERAGE, POOR
+        EXCELLENT, GOOD, SATISFACTORY, POOR
     }
 
     public enum AssignmentType {

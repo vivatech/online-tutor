@@ -1,8 +1,10 @@
 package com.vivatech.onlinetutor.service;
 
+import com.vivatech.onlinetutor.dto.SessionSummaryDto;
 import com.vivatech.onlinetutor.dto.StudentFeedbackRequest;
 import com.vivatech.onlinetutor.dto.StudentFeedbackResponse;
 import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
+import com.vivatech.onlinetutor.model.SessionFeedback;
 import com.vivatech.onlinetutor.model.SessionRegistration;
 import com.vivatech.onlinetutor.model.StudentFeedback;
 import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
@@ -13,6 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.*;
 
 @Service
 @Transactional
@@ -33,7 +40,10 @@ public class StudentFeedbackService {
                 .orElseThrow(() -> new OnlineTutorExceptionHandler("Session registration not found with id: " + request.getSessionRegistrationId()));
 
         // Check if feedback already exists for this session registration and tutor
-        if (studentFeedbackRepository.existsBySessionRegistrationIdAndTutorId(request.getSessionRegistrationId(), tutor.getId())) {
+        LocalDate date = LocalDate.of(2025, 7, 7);
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX); // 23:59:59.999999999
+        if (studentFeedbackRepository.existsBySessionRegistrationIdAndTutorIdAndCreatedAtDate(request.getSessionRegistrationId(), tutor.getId(), startOfDay, endOfDay)) {
             throw new OnlineTutorExceptionHandler("Feedback already exists for this student and session");
         }
 
@@ -201,9 +211,37 @@ public class StudentFeedbackService {
         return response;
     }
 
-    public StudentFeedbackResponse getFeedbackByRegistrationId(Integer registrationId) {
-        return studentFeedbackRepository.findBySessionRegistrationId(registrationId)
-                .map(this::mapEntityToResponse)
-                .orElseThrow(() -> new OnlineTutorExceptionHandler("Feedback not found for registration ID: " + registrationId));
+    public List<StudentFeedbackResponse> getFeedbackByRegistrationId(Integer registrationId) {
+        return studentFeedbackRepository.findBySessionRegistrationId(registrationId).stream()
+                .map(this::mapEntityToResponse).toList();
+    }
+
+    public SessionSummaryDto getSessionSummariesByRegistrationId(Integer registrationId) {
+        List<StudentFeedback> sessionFeedbacks = studentFeedbackRepository.findBySessionRegistrationId(registrationId);
+        List<StudentFeedback> feedbacks = sessionFeedbacks.stream().sorted(Comparator.comparing(StudentFeedback::getCreatedAt)).toList();
+        int counter = 1;
+        SessionSummaryDto dto = new SessionSummaryDto();
+        Map<StudentFeedback.UnderstandingLevel, Integer> summaryChart = initializeSummaryChart();
+        List<SessionSummaryDto.SessionSummary> dtoList = new ArrayList<>();
+        for (StudentFeedback feedback : feedbacks) {
+            SessionSummaryDto.SessionSummary sessionSummaryDto = new SessionSummaryDto.SessionSummary();
+            sessionSummaryDto.setSessionName("Session " + counter++);
+            sessionSummaryDto.setRating(feedback.getUnderstandingLevel());
+            dtoList.add(sessionSummaryDto);
+        }
+        dtoList.forEach(sessionSummaryDto -> summaryChart.put(sessionSummaryDto.getRating(), summaryChart.get(sessionSummaryDto.getRating()) + 1));
+        dto.setSessionSummaries(dtoList);
+        dto.setSummary(summaryChart);
+
+        return dto;
+    }
+
+    private Map<StudentFeedback.UnderstandingLevel, Integer> initializeSummaryChart() {
+        Map<StudentFeedback.UnderstandingLevel, Integer> summaryChart = new HashMap<>();
+        summaryChart.put(StudentFeedback.UnderstandingLevel.EXCELLENT, 0);
+        summaryChart.put(StudentFeedback.UnderstandingLevel.GOOD, 0);
+        summaryChart.put(StudentFeedback.UnderstandingLevel.SATISFACTORY, 0);
+        summaryChart.put(StudentFeedback.UnderstandingLevel.POOR, 0);
+        return summaryChart;
     }
 }

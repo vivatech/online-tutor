@@ -14,6 +14,7 @@ public class ZoomConstants {
     public static final Integer CREATE_MEETING_TYPE_RECURRING = 3;
     public static final Integer CREATE_MEETING_TYPE_RECURRING_FIXED_TIME = 8;
     public static final Integer CREATE_MEETING_TYPE_SCREEN_SHARE_ONLY = 10;
+    public static final Integer CREATE_MEETING_RECURRENCE_TYPE_DAILY = 1;
 
     public static final String ZOOM_DEFAULT_PASSWORD = "mumly@123";
     public static final String TIME_ZONE = "Africa/Nairobi";
