@@ -31,7 +31,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
     @Query("SELECT a.date, " +
             "SUM(CASE WHEN a.present = true THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN a.present = false THEN 1 ELSE 0 END), " +
-            "a.sessionRegistration.studentName, a.sessionRegistration.studentEmail " +
+            "a.sessionRegistration.studentName, a.sessionRegistration.studentEmail, a.sessionRegistration.id " +
             "FROM Attendance a " +
             "WHERE a.sessionRegistration.registeredSession.id = ?1 " +
             "AND a.date BETWEEN ?2 AND ?3 " +

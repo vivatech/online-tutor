@@ -20,4 +20,5 @@ public class AttendanceStatus {
     private int absentCount;
     private String name;
     private String email;
+    private Integer registrationId;
 }

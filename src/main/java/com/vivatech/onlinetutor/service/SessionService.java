@@ -17,8 +17,12 @@ import com.vivatech.onlinetutor.videochat.VideoChatDto;
 import com.vivatech.onlinetutor.videochat.VideoChatProcessor;
 import com.vivatech.onlinetutor.webchat.model.User;
 import com.vivatech.onlinetutor.webchat.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -72,13 +76,15 @@ public class SessionService {
                 .orElseThrow(() -> new OnlineTutorExceptionHandler("Session not found with ID: " + id));
     }
 
-    public List<SessionResponseDTO> getAllSessions(String userName, LocalDate viewDate) {
+    public List<SessionResponseDTO> getAllSessions(String userName, LocalDate viewDate, Boolean displayAll) {
 
         LocalDate today = viewDate == null ? LocalDate.now() : viewDate;
 
         List<TutorSession> sessions = tutorSessionRepository
                 .findByCreatedByAndSessionEndDateGreaterThanEqual(userRepository.findByUsername(userName)
                         .orElseThrow(() -> new OnlineTutorExceptionHandler("User not found")), today);
+        if (displayAll && viewDate != null) throw new OnlineTutorExceptionHandler("Cannot display all sessions for a specific date");
+        if (displayAll) return sessions.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
         return getUpcomingMeeting(sessions, today);
 
     }
@@ -90,6 +96,7 @@ public class SessionService {
                 .collect(Collectors.toList());
         // Step 2: filter the session by occasional
         List<TutorSession> occasionalMeetings = sessions.stream()
+                .filter(meeting -> meeting.getUpcomingDates() != null)
                 .filter(meeting -> meeting.getUpcomingDates().contains(today))
                 .toList();
         // Step 3: Merge lists if occasional session has any elements
@@ -118,27 +125,45 @@ public class SessionService {
         log.info("Successfully deleted session with ID: {}", id);
     }
 
-    public PaginationResponse<SessionResponseDTO> searchSessionsBySearchTerm(String createdBy, String title, Integer pageNumber, Integer size) {
+    public PaginationResponse<SessionResponseDTO> searchSessionsBySearchTerm(String createdBy, String title, String subject, Integer pageNumber, Integer size) {
         log.info("Searching sessions by title: {}", title);
 
-        List<TutorSession> sessions = tutorSessionRepository.searchAllSessions(title, createdBy);
+        if (pageNumber == null) pageNumber = 0;
+        Pageable pageable = PageRequest.of(pageNumber, size);
 
-        if (StringUtils.isEmpty(title))
-            sessions = tutorSessionRepository
-                    .findByCreatedBy(userRepository.findByUsername(createdBy)
-                            .orElseThrow(() -> new OnlineTutorExceptionHandler("User not found")));
+        Page<TutorSession> sessions = tutorSessionRepository.findAll(getSessionSearchSpecification(title, subject, createdBy), pageable);
 
-        Page<TutorSession> listToPage = CustomUtils.convertListToPage(sessions, pageNumber, size);
-        List<SessionResponseDTO> dtoList = listToPage.getContent().stream()
+        List<SessionResponseDTO> dtoList = sessions.getContent().stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
         PaginationResponse<SessionResponseDTO> response = new PaginationResponse<>();
         response.setContent(dtoList);
-        response.setPage(listToPage.getNumber());
-        response.setSize(listToPage.getSize());
-        response.setTotalElements((int) listToPage.getTotalElements());
-        response.setTotalPages(listToPage.getTotalPages());
+        response.setPage(sessions.getNumber());
+        response.setSize(sessions.getSize());
+        response.setTotalElements((int) sessions.getTotalElements());
+        response.setTotalPages(sessions.getTotalPages());
         return response;
+    }
+
+    public Specification<TutorSession> getSessionSearchSpecification(String title, String subject, String createdBy) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (!StringUtils.isEmpty(title)) {
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("sessionTitle")), "%" + title.toLowerCase() + "%"),
+                    cb.like(cb.lower(root.get("sessionType")), "%" + title.toLowerCase() + "%"),
+                    cb.like(cb.lower(root.get("recurrenceFrequency")), "%" + title.toLowerCase() + "%")
+                ));
+            }
+            if (!StringUtils.isEmpty(subject)) {
+                predicates.add(cb.like(root.get("subject"), "%" + subject + "%"));
+            }
+            if (!StringUtils.isEmpty(createdBy)) {
+                User user = userRepository.findByUsername(createdBy).orElseThrow(() -> new OnlineTutorExceptionHandler("User not found"));
+                predicates.add(cb.equal(root.get("createdBy"), user));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     // Helper methods for mapping
@@ -211,6 +236,9 @@ public class SessionService {
         dto.setMaxStudents(session.getMaxStudents());
         dto.setMinEnrollment(session.getMinEnrollment());
         dto.setEnrollmentDeadline(session.getEnrollmentDeadline());
+        dto.setSessionImage(session.getSessionCoverImageFile());
+        dto.setSubject(session.getSubject());
+        dto.setSessionStatus(session.getStatus());
 
         dto.setLearningObjectives(new HashSet<>(Arrays.asList(session.getLearningObjectives().split(","))));
         dto.setTeachingMethods(Arrays.stream(session.getTeachingMethods().split(",")).map(TutorSession.TeachingMethod::valueOf).collect(Collectors.toSet()));

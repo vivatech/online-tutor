@@ -44,4 +44,7 @@ public class SessionResponseDTO {
     private LocalDateTime updatedAt;
     private List<LocalDate> upcomingDates = new ArrayList<>();
     private MeetingResponseDto meetingDto;
+    private String sessionImage;
+    private String subject;
+    private String sessionStatus;
 }

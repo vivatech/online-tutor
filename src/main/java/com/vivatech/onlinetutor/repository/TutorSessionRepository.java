@@ -4,6 +4,7 @@ import com.vivatech.onlinetutor.model.TutorSession;
 import com.vivatech.onlinetutor.webchat.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,11 +47,20 @@ public interface TutorSessionRepository extends JpaRepository<TutorSession, Inte
 
     @Query("SELECT u FROM TutorSession u WHERE " +
             "u.createdBy.username = :userId AND " +
-            "(LOWER(u.sessionTitle) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "(" +
+            "(:searchTerm IS NULL OR :searchTerm = '' OR " +
+            "LOWER(u.sessionTitle) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(u.sessionType) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(u.subject) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(u.recurrenceFrequency) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<TutorSession> searchAllSessions(@Param("searchTerm") String searchTerm, @Param("userId") String userId);
+            "LOWER(u.recurrenceFrequency) LIKE LOWER(CONCAT('%', :searchTerm, '%'))" +
+            ") AND " +
+            "(:subject IS NULL OR :subject = '' OR LOWER(u.subject) LIKE LOWER(CONCAT('%', :subject, '%')))" +
+            ")")
+    List<TutorSession> searchAllSessions(
+            @Param("searchTerm") String searchTerm,
+            @Param("subject") String subject,
+            @Param("userId") String userId
+    );
+
 
     List<TutorSession> findByCreatedBy(User tutorUser);
     List<TutorSession> findByCreatedByAndSessionEndDateGreaterThanEqual(User tutorUser, LocalDate endDate);
@@ -60,4 +70,6 @@ public interface TutorSessionRepository extends JpaRepository<TutorSession, Inte
     List<TutorSession> findByCreatedByAndStatus(User user, String status);
 
     List<TutorSession> findByCreatedByAndSessionDateGreaterThanEqual(User user, LocalDate localDate);
+
+    Page<TutorSession> findAll(Specification<TutorSession> specification, Pageable pageable);
 }

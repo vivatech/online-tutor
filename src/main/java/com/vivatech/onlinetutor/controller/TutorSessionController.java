@@ -61,8 +61,9 @@ public class TutorSessionController {
     @Operation(summary = "Get today's sessions for the tutor or sessions for a specific date")
     public ResponseEntity<List<SessionResponseDTO>> getAllSessions(
             @RequestParam String userName,
+            @RequestParam(required = false, defaultValue = "false") Boolean displayAll,
             @RequestParam(required = false) LocalDate date) {
-        List<SessionResponseDTO> sessions = sessionService.getAllSessions(userName, date);
+        List<SessionResponseDTO> sessions = sessionService.getAllSessions(userName, date, displayAll);
         if (sessions.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(sessions);
     }
@@ -78,9 +79,10 @@ public class TutorSessionController {
     public ResponseEntity<PaginationResponse<SessionResponseDTO>> searchSessionsByTitle(
             @RequestParam String createdBy,
             @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String subject,
             @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(required = false, defaultValue = Constants.PAGE_SIZE) Integer size) {
-        PaginationResponse<SessionResponseDTO> paginationResponse = sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, pageNumber, size);
+        PaginationResponse<SessionResponseDTO> paginationResponse = sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, subject, pageNumber, size);
         if (paginationResponse.getContent().isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(paginationResponse);
     }

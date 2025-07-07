@@ -73,6 +73,7 @@ public class AttendanceController {
                         .absentCount(((Number) obj[2]).intValue())
                         .name((String) obj[3])
                         .email((String) obj[4])
+                        .registrationId((Integer) obj[5])
                         .build()).toList();
         if (statusList.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(statusList);
