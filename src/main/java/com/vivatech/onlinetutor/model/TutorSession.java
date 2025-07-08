@@ -135,6 +135,10 @@ public class TutorSession {
     @Column(name = "status", nullable = false, columnDefinition = "varchar(20) default 'ACTIVE'")
     private String status = "ACTIVE";
 
+    private String teachingMaterial;
+
+    private String teachingMaterialType;
+
     // Enums
     public enum SessionType {
         ONE_ON_ONE,

@@ -1,17 +1,22 @@
 package com.vivatech.onlinetutor.service;
 
+import com.vivatech.onlinetutor.dto.DashboardFeedbackResponse;
 import com.vivatech.onlinetutor.dto.DashboardResponse;
+import com.vivatech.onlinetutor.dto.ParentFeedbackFilter;
 import com.vivatech.onlinetutor.dto.SessionOverviewDto;
 import com.vivatech.onlinetutor.helper.AppEnums;
 import com.vivatech.onlinetutor.helper.CustomUtils;
 import com.vivatech.onlinetutor.model.MumlyTutorPayout;
+import com.vivatech.onlinetutor.model.SessionFeedback;
 import com.vivatech.onlinetutor.model.TutorSession;
 import com.vivatech.onlinetutor.repository.MumlyTutorPayoutRepository;
 import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
 import com.vivatech.onlinetutor.repository.TutorSessionRepository;
 import com.vivatech.onlinetutor.webchat.model.User;
-import com.vivatech.onlinetutor.webchat.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -28,16 +33,15 @@ public class DashboardService {
     private final SessionRegistrationRepository sessionRegistrationRepository;
     private final MumlyTutorPayoutRepository mumlyTutorPayoutRepository;
     private final TutorSessionRepository tutorSessionRepository;
-    private final UserRepository userRepository;
+    private final SessionFeedbackService feedbackService;
 
-    public DashboardService(UserRepository userRepository,
-                            TutorSessionRepository tutorSessionRepository,
+    public DashboardService(TutorSessionRepository tutorSessionRepository,
                             MumlyTutorPayoutRepository mumlyTutorPayoutRepository,
-                            SessionRegistrationRepository sessionRegistrationRepository) {
-        this.userRepository = userRepository;
+                            SessionRegistrationRepository sessionRegistrationRepository, SessionFeedbackService feedbackService) {
         this.tutorSessionRepository = tutorSessionRepository;
         this.mumlyTutorPayoutRepository = mumlyTutorPayoutRepository;
         this.sessionRegistrationRepository = sessionRegistrationRepository;
+        this.feedbackService = feedbackService;
     }
 
     public Integer findCompletedSession(User user) {
@@ -94,5 +98,19 @@ public class DashboardService {
         Integer registrationSize = sessionRegistrationRepository.countByRegisteredSessionIn(tutorSessions);
         List<MumlyTutorPayout> payoutList = mumlyTutorPayoutRepository.findByTutorSessionInAndPaymentStatus(tutorSessions, AppEnums.PaymentStatus.SUCCESS.toString());
         return new SessionOverviewDto(tutorSessions.size(), registrationSize, payoutList.stream().mapToDouble(MumlyTutorPayout::getNetAmount).sum());
+    }
+
+    public List<DashboardFeedbackResponse> latestFeedbacks(User user) {
+        ParentFeedbackFilter dto = new ParentFeedbackFilter();
+        dto.setTutorUsername(user.getUsername());
+        dto.setPageNumber(0);
+        dto.setSize(10);
+        Pageable pageable = PageRequest.of(dto.getPageNumber(), dto.getSize());
+        Page<SessionFeedback> feedbackFilter = feedbackService.filterEvent(dto, pageable);
+        List<DashboardFeedbackResponse> dtoList = new ArrayList<>();
+        feedbackFilter.getContent().forEach(ele -> {
+            dtoList.add(new DashboardFeedbackResponse(ele.getParentName(), ele.getComment(), ele.getRating()));
+        });
+        return dtoList;
     }
 }

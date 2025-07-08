@@ -64,10 +64,58 @@ public class SessionService {
         if (requestDTO.getSessionCoverImageFile() != null) {
             fileStorageService.storeFile(requestDTO.getSessionCoverImageFile(), session.getSessionCoverImageFile(), "");
         }
+        if (requestDTO.getTeachingMaterialFile() != null) {
+            fileStorageService.storeFile(requestDTO.getTeachingMaterialFile(), savedSession.getTeachingMaterial(), "");
+        }
         createSessionMeeting(savedSession);
 
         log.info("Successfully created session with ID: {}", savedSession.getId());
         return mapToResponseDTO(savedSession);
+    }
+
+    private TutorSession handleTeachingMaterialFIleSave(TutorSession session, SessionRequestDTO requestDTO) {
+        if (session.getId() != null) {
+            // Updating existing session
+            if (requestDTO.getDocumentType().equals(AppEnums.DocumentType.LINK)) {
+                // If previous was file, delete it
+                if (!StringUtils.isEmpty(session.getTeachingMaterial())
+                        && session.getTeachingMaterialType().equals(AppEnums.DocumentType.FILE.toString())) {
+                    fileStorageService.deleteFile("", session.getTeachingMaterial());
+                }
+                session.setTeachingMaterialType(AppEnums.DocumentType.LINK.toString());
+                session.setTeachingMaterial(requestDTO.getTeachingMaterialLink());
+
+            } else if (requestDTO.getDocumentType().equals(AppEnums.DocumentType.FILE)) {
+                // If previous was link, no need to delete anything
+                // Replace old file with new one if needed
+                if (!StringUtils.isEmpty(session.getTeachingMaterial())
+                        && session.getTeachingMaterialType().equals(AppEnums.DocumentType.FILE.toString())) {
+                    fileStorageService.deleteFile("", session.getTeachingMaterial());
+                }
+
+                String extension = fileStorageService.getFileExtension(
+                        Objects.requireNonNull(requestDTO.getTeachingMaterialFile().getOriginalFilename()));
+                String referenceNumber = UUID.randomUUID() + "." + extension;
+
+                session.setTeachingMaterialType(AppEnums.DocumentType.FILE.toString());
+                session.setTeachingMaterial(referenceNumber);
+            }
+
+        } else {
+            // Creating new session
+            if (requestDTO.getDocumentType().equals(AppEnums.DocumentType.FILE)) {
+                String extension = fileStorageService.getFileExtension(
+                        Objects.requireNonNull(requestDTO.getTeachingMaterialFile().getOriginalFilename()));
+                String referenceNumber = UUID.randomUUID() + "." + extension;
+
+                session.setTeachingMaterialType(AppEnums.DocumentType.FILE.toString());
+                session.setTeachingMaterial(referenceNumber);
+            } else {
+                session.setTeachingMaterialType(AppEnums.DocumentType.LINK.toString());
+                session.setTeachingMaterial(requestDTO.getTeachingMaterialLink());
+            }
+        }
+        return session;
     }
 
     public TutorSession getSessionById(Integer id) {
@@ -217,7 +265,8 @@ public class SessionService {
         }
         if (dto.getId() != null) session.setUpdatedBy(createdBy);
         log.info("Upcoming dates: {}", session.getUpcomingDates());
-        return session;
+        //Handle file and link for Teaching material
+        return handleTeachingMaterialFIleSave(session, dto);
     }
 
     private SessionResponseDTO mapToResponseDTO(TutorSession session) {

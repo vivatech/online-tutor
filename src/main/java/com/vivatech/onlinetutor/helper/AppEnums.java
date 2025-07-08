@@ -34,4 +34,8 @@ public class AppEnums {
         GROSS_REVENUE, COMMISSION, NET_REVENUE
     }
 
+    public enum DocumentType {
+        FILE, LINK
+    }
+
 }

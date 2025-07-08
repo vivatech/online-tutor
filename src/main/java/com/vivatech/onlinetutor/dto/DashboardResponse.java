@@ -20,6 +20,7 @@ public class DashboardResponse {
     private Map<String, Double> revenueByMonth;
     private List<UpcomingSession> upcomingSessions;
     private SessionOverviewDto overview;
+    private List<DashboardFeedbackResponse> feedbackResponses;
 
     @Data
     public static class UpcomingSession {

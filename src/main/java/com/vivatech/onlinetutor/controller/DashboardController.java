@@ -32,6 +32,7 @@ public class DashboardController {
                 .revenueByMonth(dashboardService.revenueByMonth(user))
                 .upcomingSessions(dashboardService.upcomingSessions(user))
                 .overview(dashboardService.sessionOverview(user))
+                .feedbackResponses(dashboardService.latestFeedbacks(user))
                 .build();
         return ResponseEntity.ok(dashboardResponse);
     }

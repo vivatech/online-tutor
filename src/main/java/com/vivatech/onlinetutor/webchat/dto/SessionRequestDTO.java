@@ -1,5 +1,6 @@
 package com.vivatech.onlinetutor.webchat.dto;
 
+import com.vivatech.onlinetutor.helper.AppEnums;
 import com.vivatech.onlinetutor.model.TutorSession;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -87,4 +88,10 @@ public class SessionRequestDTO {
     private String subject;
 
     private MultipartFile sessionCoverImageFile;
+
+    private AppEnums.DocumentType documentType;
+
+    private MultipartFile teachingMaterialFile;
+
+    private String teachingMaterialLink;
 }
