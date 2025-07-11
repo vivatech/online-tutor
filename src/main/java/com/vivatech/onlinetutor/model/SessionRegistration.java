@@ -21,6 +21,8 @@ public class SessionRegistration {
     private String studentEmail;
     private String studentAge;
     private String guardianName;
+    private String guardianPhone;
+    private String guardianEmail;
     @ManyToOne
     private TutorSession registeredSession;
     private String status;

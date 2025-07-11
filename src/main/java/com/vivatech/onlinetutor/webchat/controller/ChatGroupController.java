@@ -25,7 +25,7 @@ public class ChatGroupController {
     @Operation(summary = "Create a new chat group")
     public ResponseEntity<ChatGroupDto> createGroup(@Valid @RequestBody CreateGroupRequest request) {
         ChatGroupDto group = chatGroupService.createGroup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(group);
+        return ResponseEntity.status(HttpStatus.OK).body(group);
     }
     
     @GetMapping("/{id}")

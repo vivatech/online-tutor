@@ -44,7 +44,7 @@ public class OnlineTutorScheduler {
     }
 
     @Scheduled(cron = "0 */1 * * * *")
-    private void sumAllEventPayout() {
+    private void sumAllTutorPayout() {
         log.info("Executing sumAllTutorPayout at {}", LocalDateTime.now());
         List<TutorSession> sessionList = tutorSessionRepository.findBySessionEndDateGreaterThanEqual(LocalDate.now());
         for (TutorSession session : sessionList) {

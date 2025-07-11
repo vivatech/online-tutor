@@ -124,7 +124,7 @@ public class SessionService {
                 .orElseThrow(() -> new OnlineTutorExceptionHandler("Session not found with ID: " + id));
     }
 
-    public List<SessionResponseDTO> getAllSessions(String userName, LocalDate viewDate, Boolean displayAll) {
+    public List<SessionResponseDTO> getAllSessions(String userName, LocalDate viewDate, Boolean displayAll, String subject, String sessionName) {
 
         LocalDate today = viewDate == null ? LocalDate.now() : viewDate;
 
@@ -133,6 +133,8 @@ public class SessionService {
                         .orElseThrow(() -> new OnlineTutorExceptionHandler("User not found")), today);
         if (displayAll && viewDate != null) throw new OnlineTutorExceptionHandler("Cannot display all sessions for a specific date");
         if (displayAll) return sessions.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+        if (!StringUtils.isEmpty(subject)) sessions = sessions.stream().filter(ele -> ele.getSubject().equalsIgnoreCase(subject)).collect(Collectors.toList());
+        if (!StringUtils.isEmpty(sessionName)) sessions = sessions.stream().filter(ele -> ele.getSessionTitle().equalsIgnoreCase(sessionName)).collect(Collectors.toList());
         return getUpcomingMeeting(sessions, today);
 
     }

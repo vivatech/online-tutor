@@ -70,9 +70,12 @@ public class SessionRegistrationService {
         sessionRegistration.setStatus(AppEnums.EventStatus.PENDING.toString());
         sessionRegistration.setCreatedAt(LocalDateTime.now());
         SessionRegistration savedRegistration = sessionRegistrationRepository.save(sessionRegistration);
-        CreateUserRequest createUserRequest = prepareDtoToSaveParent(savedRegistration);
 
-        if (userRepository.findByUsername(createUserRequest.getUsername()).isEmpty()) userService.createUser(createUserRequest);
+        CreateUserRequest createParentUserRequest = prepareDtoToSaveParent(savedRegistration);
+        CreateUserRequest createStudentUserRequest = prepareDtoToSaveStudent(savedRegistration);
+        if (userRepository.findByUsername(createParentUserRequest.getUsername()).isEmpty()) userService.createUser(createParentUserRequest);
+        if (userRepository.findByUsername(createStudentUserRequest.getUsername()).isEmpty()) userService.createUser(createStudentUserRequest);
+
         notificationService.sendAdminNotification(savedRegistration.getId(), AppEnums.NotificationType.REGISTRATION, null);
         requestDto.getPaymentDto().setSessionRegistrationId(savedRegistration.getId());
         Response response = paymentService.processPayment(requestDto.getPaymentDto());
@@ -81,13 +84,24 @@ public class SessionRegistrationService {
 
     private CreateUserRequest prepareDtoToSaveParent(SessionRegistration sessionRegistration) {
         return CreateUserRequest.builder()
-        		.username(sessionRegistration.getStudentPhone())
-        		.msisdn(sessionRegistration.getStudentPhone())
+        		.username(sessionRegistration.getGuardianPhone())
+        		.msisdn(sessionRegistration.getGuardianPhone())
         		.fullName(sessionRegistration.getGuardianName())
-        		.email(sessionRegistration.getStudentEmail())
+        		.email(sessionRegistration.getGuardianEmail())
         		.role(User.UserRole.PARENT)
         		.profilePicture(null)
         		.build();
+    }
+
+    private CreateUserRequest prepareDtoToSaveStudent(SessionRegistration sessionRegistration) {
+        return CreateUserRequest.builder()
+                .username(sessionRegistration.getStudentPhone())
+                .msisdn(sessionRegistration.getStudentPhone())
+                .fullName(sessionRegistration.getStudentName())
+                .email(sessionRegistration.getStudentEmail())
+                .role(User.UserRole.STUDENT)
+                .profilePicture(null)
+                .build();
     }
 
     public List<SessionRegistration> getAllSessionRegistrations() {

@@ -29,7 +29,7 @@ public class StudentFeedbackController {
     @PostMapping
     public ResponseEntity<StudentFeedbackResponse> createFeedback(@Valid @RequestBody StudentFeedbackRequest request) {
         StudentFeedbackResponse feedback = studentFeedbackService.createFeedback(request);
-        return new ResponseEntity<>(feedback, HttpStatus.CREATED);
+        return new ResponseEntity<>(feedback, HttpStatus.OK);
     }
 
     /**

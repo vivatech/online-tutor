@@ -1,14 +1,13 @@
 package com.vivatech.onlinetutor.controller;
 
 
-import com.vivatech.onlinetutor.attendance.AttendanceDto;
-import com.vivatech.onlinetutor.attendance.AttendanceRequestDto;
-import com.vivatech.onlinetutor.attendance.AttendanceStatus;
-import com.vivatech.onlinetutor.attendance.AttendanceSummaryDto;
+import com.vivatech.onlinetutor.attendance.*;
+import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
 import com.vivatech.onlinetutor.model.Attendance;
 import com.vivatech.onlinetutor.model.SessionRegistration;
 import com.vivatech.onlinetutor.repository.AttendanceRepository;
 import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -63,19 +62,50 @@ public class AttendanceController {
 
     @GetMapping("/history")
     public ResponseEntity<List<AttendanceStatus>> getAttendanceHistory(@RequestParam Integer sessionId,
-                                                       @RequestParam LocalDate startDate,
-                                                       @RequestParam LocalDate endDate) {
-        List<Object[]> results = attendanceRepository.getAttendanceListByEvent(sessionId, startDate, endDate);
-        List<AttendanceStatus> statusList = results.stream()
+                                                                       @RequestParam LocalDate startDate,
+                                                                       @RequestParam LocalDate endDate,
+                                                                       @RequestParam(required = false) String studentName) {
+        List<Attendance> attendanceList = attendanceRepository.findBySessionRegistrationIdIn(List.of(sessionId));
+        List<AttendanceStatus> statusList = attendanceList.stream()
+                .filter(ele -> ele.getDate().isAfter(startDate.minusDays(1)) && ele.getDate().isBefore(endDate.plusDays(1)))
                 .map(obj -> AttendanceStatus.builder()
-                        .date((LocalDate) obj[0])
-                        .presentCount(((Number) obj[1]).intValue())
-                        .absentCount(((Number) obj[2]).intValue())
-                        .name((String) obj[3])
-                        .email((String) obj[4])
-                        .registrationId((Integer) obj[5])
+                        .date(obj.getDate())
+                        .presentCount(obj.getPresent() ? 1 : 0)
+                        .absentCount(obj.getPresent() ? 0 : 1)
+                        .name(obj.getSessionRegistration().getStudentName())
+                        .email(obj.getSessionRegistration().getStudentEmail())
+                        .registrationId(obj.getSessionRegistration().getId())
                         .build()).toList();
         if (statusList.isEmpty()) return ResponseEntity.noContent().build();
+        if (!StringUtils.isEmpty(studentName)) {
+            String lowerCaseName = studentName.toLowerCase();
+            statusList = statusList.stream()
+                    .filter(ele -> ele.getName().toLowerCase().contains(lowerCaseName))
+                    .toList();
+        }
         return ResponseEntity.ok(statusList);
+    }
+
+    @GetMapping("/get-registration-and-attendance-detail")
+    public ResponseEntity<RegistrationAndAttendanceResponse> getRegistrationAndAttendanceDetail(@RequestParam Integer registrationId,
+                                                                                                @RequestParam LocalDate attendanceDate) {
+        SessionRegistration sessionRegistration = sessionRegistrationRepository.findById(registrationId).orElseThrow(() -> new OnlineTutorExceptionHandler("Registration not found with ID: " + registrationId));
+        Attendance attendance = attendanceRepository.findBySessionRegistrationIdAndDate(sessionRegistration.getId(), attendanceDate);
+        AttendanceStatus attendanceStatus = null;
+        if (attendance != null) {
+            attendanceStatus = AttendanceStatus.builder()
+                    .date(attendance.getDate())
+                    .presentCount(attendance.getPresent() ? 1 : 0)
+                    .absentCount(attendance.getPresent() ? 0 : 1)
+                    .name(attendance.getSessionRegistration().getStudentName())
+                    .email(attendance.getSessionRegistration().getStudentEmail())
+                    .registrationId(attendance.getSessionRegistration().getId())
+                    .build();
+        }
+        RegistrationAndAttendanceResponse response = RegistrationAndAttendanceResponse.builder()
+                .sessionRegistration(sessionRegistration)
+                .attendanceStatus(attendanceStatus)
+                .build();
+        return ResponseEntity.ok(response);
     }
 }

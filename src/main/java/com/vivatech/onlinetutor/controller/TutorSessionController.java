@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -58,13 +60,21 @@ public class TutorSessionController {
 
 
     @GetMapping
-    @Operation(summary = "Get today's sessions for the tutor or sessions for a specific date")
+    @Operation(summary = "Get today's sessions for the tutor or sessions for a specific date",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successfully received sessions",
+                            content = @Content(schema = @Schema(implementation = SessionResponseDTO.class))),
+                    @ApiResponse(responseCode = "204", description = "No sessions found")
+            }
+    )
     public ResponseEntity<List<SessionResponseDTO>> getAllSessions(
             @RequestParam String userName,
             @RequestParam(required = false, defaultValue = "false") Boolean displayAll,
-            @RequestParam(required = false) LocalDate date) {
-        List<SessionResponseDTO> sessions = sessionService.getAllSessions(userName, date, displayAll);
-        if (sessions.isEmpty()) return ResponseEntity.noContent().build();
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String sessionName) {
+        List<SessionResponseDTO> sessions = sessionService.getAllSessions(userName, date, displayAll, subject, sessionName);
+        if (sessions.isEmpty()) return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new ArrayList<>());
         return ResponseEntity.ok(sessions);
     }
 

@@ -29,7 +29,7 @@ public class MessageController {
     @Operation(summary = "Send a message")
     public ResponseEntity<MessageDto> sendMessage(@Valid @RequestBody SendMessageRequest request) {
         MessageDto message = messageService.sendMessage(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(message);
+        return ResponseEntity.status(HttpStatus.OK).body(message);
     }
     
     @GetMapping("/direct")

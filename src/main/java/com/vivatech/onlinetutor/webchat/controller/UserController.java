@@ -26,7 +26,7 @@ public class UserController {
     @Operation(summary = "Create a new user")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserDto user = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
     
     @GetMapping("/{id}")
