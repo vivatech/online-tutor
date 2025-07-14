@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -86,26 +87,31 @@ public class AttendanceController {
         return ResponseEntity.ok(statusList);
     }
 
-    @GetMapping("/get-registration-and-attendance-detail")
-    public ResponseEntity<RegistrationAndAttendanceResponse> getRegistrationAndAttendanceDetail(@RequestParam Integer registrationId,
-                                                                                                @RequestParam LocalDate attendanceDate) {
-        SessionRegistration sessionRegistration = sessionRegistrationRepository.findById(registrationId).orElseThrow(() -> new OnlineTutorExceptionHandler("Registration not found with ID: " + registrationId));
-        Attendance attendance = attendanceRepository.findBySessionRegistrationIdAndDate(sessionRegistration.getId(), attendanceDate);
-        AttendanceStatus attendanceStatus = null;
-        if (attendance != null) {
-            attendanceStatus = AttendanceStatus.builder()
-                    .date(attendance.getDate())
-                    .presentCount(attendance.getPresent() ? 1 : 0)
-                    .absentCount(attendance.getPresent() ? 0 : 1)
-                    .name(attendance.getSessionRegistration().getStudentName())
-                    .email(attendance.getSessionRegistration().getStudentEmail())
-                    .registrationId(attendance.getSessionRegistration().getId())
+    @GetMapping("/get-student-list-for-attendance")
+    public ResponseEntity<List<RegistrationAndAttendanceResponse>> getStudentListForAttendance(@RequestParam Integer sessionId,
+                                                                                               @RequestParam(required = false) LocalDate attendanceDate) {
+        if (attendanceDate == null) attendanceDate = LocalDate.now();
+        List<SessionRegistration> registrationList = sessionRegistrationRepository.findByRegisteredSessionId(sessionId);
+        List<RegistrationAndAttendanceResponse> dtoList = new ArrayList<>();
+        for (SessionRegistration registration : registrationList) {
+            Attendance attendance = attendanceRepository.findBySessionRegistrationIdAndDate(registration.getId(), attendanceDate);
+            AttendanceStatus attendanceStatus = null;
+            if (attendance != null) {
+                attendanceStatus = AttendanceStatus.builder()
+                        .date(attendance.getDate())
+                        .presentCount(attendance.getPresent() ? 1 : 0)
+                        .absentCount(attendance.getPresent() ? 0 : 1)
+                        .name(attendance.getSessionRegistration().getStudentName())
+                        .email(attendance.getSessionRegistration().getStudentEmail())
+                        .registrationId(attendance.getSessionRegistration().getId())
+                        .build();
+            }
+            RegistrationAndAttendanceResponse response = RegistrationAndAttendanceResponse.builder()
+                    .sessionRegistration(registration)
+                    .attendanceStatus(attendanceStatus)
                     .build();
+            dtoList.add(response);
         }
-        RegistrationAndAttendanceResponse response = RegistrationAndAttendanceResponse.builder()
-                .sessionRegistration(sessionRegistration)
-                .attendanceStatus(attendanceStatus)
-                .build();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(dtoList);
     }
 }

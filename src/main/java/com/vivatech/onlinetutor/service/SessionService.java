@@ -129,8 +129,8 @@ public class SessionService {
         LocalDate today = viewDate == null ? LocalDate.now() : viewDate;
 
         List<TutorSession> sessions = tutorSessionRepository
-                .findByCreatedByAndSessionEndDateGreaterThanEqual(userRepository.findByUsername(userName)
-                        .orElseThrow(() -> new OnlineTutorExceptionHandler("User not found")), today);
+                .findByCreatedByAndSessionEndDateGreaterThanEqualAndSessionDateLessThanEqual(userRepository.findByUsername(userName)
+                        .orElseThrow(() -> new OnlineTutorExceptionHandler("User not found")), today, today);
         if (displayAll && viewDate != null) throw new OnlineTutorExceptionHandler("Cannot display all sessions for a specific date");
         if (displayAll) return sessions.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
         if (!StringUtils.isEmpty(subject)) sessions = sessions.stream().filter(ele -> ele.getSubject().equalsIgnoreCase(subject)).collect(Collectors.toList());
@@ -248,11 +248,6 @@ public class SessionService {
         session.setVisibility(dto.getVisibility());
         session.setCreatedBy(createdBy);
         session.setRecurrenceFrequency(dto.getRecurrenceFrequency());
-        if (!session.getIsRecurring()) {
-            if (dto.getUpcomingDates().isEmpty()) throw new OnlineTutorExceptionHandler("Upcoming dates are required for non-recurring sessions");
-            session.getUpcomingDates().clear();
-            session.setUpcomingDates(dto.getUpcomingDates());
-        }
         if (dto.getRecurrenceFrequency().equals(TutorSession.RecurrenceFrequency.CUSTOM)) {
             if (!session.getUpcomingDates().isEmpty()) session.getUpcomingDates().clear();
             session.setUpcomingDates(dto.getUpcomingDates());
