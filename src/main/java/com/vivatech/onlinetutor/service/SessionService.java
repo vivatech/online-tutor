@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.vivatech.onlinetutor.webchat.dto.SessionRequestDTO;
@@ -175,13 +176,13 @@ public class SessionService {
         log.info("Successfully deleted session with ID: {}", id);
     }
 
-    public PaginationResponse<SessionResponseDTO> searchSessionsBySearchTerm(String createdBy, String title, String subject, Integer pageNumber, Integer size) {
+    public PaginationResponse<SessionResponseDTO> searchSessionsBySearchTerm(String createdBy, String title, String subject, String startTime, String endTime, Integer pageNumber, Integer size) {
         log.info("Searching sessions by title: {}", title);
 
         if (pageNumber == null) pageNumber = 0;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
-        Page<TutorSession> sessions = tutorSessionRepository.findAll(getSessionSearchSpecification(title, subject, createdBy), pageable);
+        Page<TutorSession> sessions = tutorSessionRepository.findAll(getSessionSearchSpecification(title, subject, createdBy, CustomUtils.convertStringToTime(startTime), CustomUtils.convertStringToTime(endTime)), pageable);
 
         List<SessionResponseDTO> dtoList = sessions.getContent().stream()
                 .map(this::mapToResponseDTO)
@@ -195,7 +196,7 @@ public class SessionService {
         return response;
     }
 
-    public Specification<TutorSession> getSessionSearchSpecification(String title, String subject, String createdBy) {
+    public Specification<TutorSession> getSessionSearchSpecification(String title, String subject, String createdBy, LocalTime startTime, LocalTime endTime) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (!StringUtils.isEmpty(title)) {
@@ -211,6 +212,12 @@ public class SessionService {
             if (!StringUtils.isEmpty(createdBy)) {
                 User user = userRepository.findByUsername(createdBy).orElseThrow(() -> new OnlineTutorExceptionHandler("User not found"));
                 predicates.add(cb.equal(root.get("createdBy"), user));
+            }
+            if (startTime != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), startTime));
+            }
+            if (endTime != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("endTime"), endTime));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -285,6 +292,7 @@ public class SessionService {
         dto.setSessionImage(session.getSessionCoverImageFile());
         dto.setSubject(session.getSubject());
         dto.setSessionStatus(session.getStatus());
+        dto.setCreatedByName(session.getCreatedBy().getFullName());
 
         dto.setLearningObjectives(new HashSet<>(Arrays.asList(session.getLearningObjectives().split(","))));
         dto.setTeachingMethods(Arrays.stream(session.getTeachingMethods().split(",")).map(TutorSession.TeachingMethod::valueOf).collect(Collectors.toSet()));
@@ -373,5 +381,16 @@ public class SessionService {
             dtoList.add(dto);
         }
         return dtoList;
+    }
+
+    public List<String> getTutorSubjects(String subjectName) {
+        List<String> tutorSessions = tutorSessionRepository.findAllSubject();
+        if (!StringUtils.isEmpty(subjectName)) {
+            return tutorSessions.stream()
+                    .distinct()
+                    .filter(subject -> subject.contains(subjectName))
+                    .collect(Collectors.toList());
+        }
+        return tutorSessions;
     }
 }

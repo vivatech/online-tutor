@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,9 +91,11 @@ public class TutorSessionController {
             @RequestParam String createdBy,
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
             @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(required = false, defaultValue = Constants.PAGE_SIZE) Integer size) {
-        PaginationResponse<SessionResponseDTO> paginationResponse = sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, subject, pageNumber, size);
+        PaginationResponse<SessionResponseDTO> paginationResponse = sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, subject, startTime, endTime, pageNumber, size);
         if (paginationResponse.getContent().isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(paginationResponse);
     }
@@ -120,11 +123,20 @@ public class TutorSessionController {
         return new ResponseEntity<>(response.getMessage(), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get all pending payouts which has to be paid by Super admin")
     @GetMapping("/get-pending-payouts")
     public ResponseEntity<List<PayoutRequestDto>> getPendingPayouts() {
         List<PayoutRequestDto> pendingPayouts = sessionService.getPendingPayouts();
         if (pendingPayouts.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(pendingPayouts);
+    }
+
+    @Operation(summary = "Get all subjects of the session created the tutor")
+    @GetMapping("/tutor-subjects")
+    public ResponseEntity<List<String>> getTutorSubjects(@RequestParam(required = false) String subjectName) {
+        List<String> subjects = sessionService.getTutorSubjects(subjectName);
+        if (subjects.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(subjects);
     }
 
 

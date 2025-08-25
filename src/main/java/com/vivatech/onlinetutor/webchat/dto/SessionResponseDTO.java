@@ -47,4 +47,5 @@ public class SessionResponseDTO {
     private String sessionImage;
     private String subject;
     private String sessionStatus;
+    private String createdByName;
 }

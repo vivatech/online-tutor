@@ -16,6 +16,8 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -340,7 +342,7 @@ public class CustomUtils {
 
     public static <T> PaginationResponse<T> convertPageToPaginationResponse(Page<T> page, List<T> dtoList) {
         PaginationResponse<T> response = new PaginationResponse<>();
-        response.setContent(dtoList);
+        response.setContent(page.getContent());
         response.setPage(page.getNumber());
         response.setSize(page.getSize());
         response.setTotalElements((int) page.getTotalElements());
@@ -367,5 +369,17 @@ public class CustomUtils {
         emptyMap.put("Nov", 0.0);
         emptyMap.put("Dec", 0.0);
         return emptyMap;
+    }
+
+    public static LocalTime convertStringToTime(String time) {
+        //check the patter is in the format 00:00:00
+        Pattern pattern = Pattern.compile("^([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$");
+        Matcher matcher = pattern.matcher(time);
+        if (!matcher.matches()) {
+            throw new OnlineTutorExceptionHandler("Invalid time format. Expected format is HH:mm:ss");
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        LocalTime localTime = LocalTime.parse(time, formatter);
+        return localTime;
     }
 }

@@ -72,4 +72,8 @@ public interface TutorSessionRepository extends JpaRepository<TutorSession, Inte
     List<TutorSession> findByCreatedByAndSessionDateGreaterThanEqual(User user, LocalDate localDate);
 
     Page<TutorSession> findAll(Specification<TutorSession> specification, Pageable pageable);
+
+    @Query("SELECT DISTINCT u.subject FROM TutorSession u")
+    List<String> findAllSubject();
+
 }
