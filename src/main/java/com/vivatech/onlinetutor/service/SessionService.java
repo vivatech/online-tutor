@@ -176,13 +176,13 @@ public class SessionService {
         log.info("Successfully deleted session with ID: {}", id);
     }
 
-    public PaginationResponse<SessionResponseDTO> searchSessionsBySearchTerm(String createdBy, String title, String subject, String startTime, String endTime, Integer pageNumber, Integer size) {
+    public PaginationResponse<SessionResponseDTO> searchSessionsBySearchTerm(String createdBy, String title, String subject, String startTime, String endTime, Double startPrice, Double endPrice, Integer pageNumber, Integer size) {
         log.info("Searching sessions by title: {}", title);
 
         if (pageNumber == null) pageNumber = 0;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
-        Page<TutorSession> sessions = tutorSessionRepository.findAll(getSessionSearchSpecification(title, subject, createdBy, CustomUtils.convertStringToTime(startTime), CustomUtils.convertStringToTime(endTime)), pageable);
+        Page<TutorSession> sessions = tutorSessionRepository.findAll(getSessionSearchSpecification(title, subject, createdBy, CustomUtils.convertStringToTime(startTime), CustomUtils.convertStringToTime(endTime), startPrice, endPrice), pageable);
 
         List<SessionResponseDTO> dtoList = sessions.getContent().stream()
                 .map(this::mapToResponseDTO)
@@ -196,7 +196,7 @@ public class SessionService {
         return response;
     }
 
-    public Specification<TutorSession> getSessionSearchSpecification(String title, String subject, String createdBy, LocalTime startTime, LocalTime endTime) {
+    public Specification<TutorSession> getSessionSearchSpecification(String title, String subject, String createdBy, LocalTime startTime, LocalTime endTime, double startPrice, double endPrice) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (!StringUtils.isEmpty(title)) {
@@ -218,6 +218,9 @@ public class SessionService {
             }
             if (endTime != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("endTime"), endTime));
+            }
+            if (startPrice >= 0 && endPrice > 0) {
+                predicates.add(cb.between(root.get("pricePerSession"), startPrice, endPrice));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

@@ -86,16 +86,18 @@ public class TutorSessionController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search sessions by title, type, subject and frequency")
+    @Operation(summary = "Search sessions by title, type, subject, price and frequency")
     public ResponseEntity<PaginationResponse<SessionResponseDTO>> searchSessionsByTitle(
             @RequestParam String createdBy,
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
+            @RequestParam(required = false, defaultValue = "0") Double startPrice,
+            @RequestParam(required = false, defaultValue = "0") Double endPrice,
             @RequestParam(required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(required = false, defaultValue = Constants.PAGE_SIZE) Integer size) {
-        PaginationResponse<SessionResponseDTO> paginationResponse = sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, subject, startTime, endTime, pageNumber, size);
+        PaginationResponse<SessionResponseDTO> paginationResponse = sessionService.searchSessionsBySearchTerm(createdBy, searchTerm, subject, startTime, endTime, startPrice, endPrice, pageNumber, size);
         if (paginationResponse.getContent().isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(paginationResponse);
     }

@@ -372,6 +372,7 @@ public class CustomUtils {
     }
 
     public static LocalTime convertStringToTime(String time) {
+        if (time == null || time.isEmpty()) return null;
         //check the patter is in the format 00:00:00
         Pattern pattern = Pattern.compile("^([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$");
         Matcher matcher = pattern.matcher(time);
