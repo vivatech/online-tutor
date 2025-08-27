@@ -14,6 +14,8 @@ public class SessionRegistrationDto {
     private String studentEmail;
     private String studentAge;
     private String guardianName;
+    private String guardianPhone;
+    private String guardianEmail;
     private Integer sessionId;
     private String status;
     private String reason;

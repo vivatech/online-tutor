@@ -64,6 +64,8 @@ public class SessionRegistrationService {
         sessionRegistration.setStudentEmail(dto.getStudentEmail());
         sessionRegistration.setStudentAge(dto.getStudentAge());
         sessionRegistration.setGuardianName(dto.getGuardianName());
+        sessionRegistration.setGuardianPhone(dto.getGuardianPhone());
+        sessionRegistration.setGuardianEmail(dto.getGuardianEmail());
 
         TutorSession tutorSession = tutorSessionRepository.findById(dto.getSessionId()).orElseThrow(() -> new OnlineTutorExceptionHandler("Session not found with ID: " + dto.getSessionId()));
         sessionRegistration.setRegisteredSession(tutorSession);
