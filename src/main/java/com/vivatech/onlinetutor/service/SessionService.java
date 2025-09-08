@@ -1,8 +1,6 @@
 package com.vivatech.onlinetutor.service;
 
-import com.vivatech.onlinetutor.dto.PaginationResponse;
-import com.vivatech.onlinetutor.dto.PayoutRequestDto;
-import com.vivatech.onlinetutor.dto.Response;
+import com.vivatech.onlinetutor.dto.*;
 import com.vivatech.onlinetutor.exception.OnlineTutorExceptionHandler;
 import com.vivatech.onlinetutor.helper.AppEnums;
 import com.vivatech.onlinetutor.helper.CustomUtils;
@@ -299,7 +297,7 @@ public class SessionService {
 
         dto.setLearningObjectives(new HashSet<>(Arrays.asList(session.getLearningObjectives().split(","))));
         dto.setTeachingMethods(Arrays.stream(session.getTeachingMethods().split(",")).map(TutorSession.TeachingMethod::valueOf).collect(Collectors.toSet()));
-        dto.setToolsRequired(Arrays.stream(session.getToolsRequired().split(",")).map(TutorSession.ToolRequired::valueOf).collect(Collectors.toSet()));
+        dto.setToolsRequired(StringUtils.isEmpty(session.getToolsRequired()) ? new HashSet<>() : Arrays.stream(session.getToolsRequired().split(",")).map(TutorSession.ToolRequired::valueOf).collect(Collectors.toSet()));
         dto.setLanguageOfInstruction(session.getLanguageOfInstruction());
         dto.setPricePerSession(session.getPricePerSession());
         dto.setDiscountCoupon(session.getDiscountCoupon());
@@ -371,16 +369,27 @@ public class SessionService {
         return Response.builder().status(AppEnums.EventStatus.SUCCESS.toString()).message("Payout updated successfully.").build();
     }
 
-    public List<PayoutRequestDto> getPendingPayouts() {
+    public List<PayoutResponseDto> getPendingPayouts() {
         List<MumlyTutorPayout> tutorPayouts = mumlyTutorPayoutRepository.findByPaymentStatus(AppEnums.PaymentStatus.PENDING.toString());
-        List<PayoutRequestDto> dtoList = new ArrayList<>();
+        List<PayoutResponseDto> dtoList = new ArrayList<>();
         for (MumlyTutorPayout tutorPayout : tutorPayouts) {
-            PayoutRequestDto dto = new PayoutRequestDto();
+            if (tutorPayout.getAmount() == 0) continue;
+            PayoutResponseDto dto = new PayoutResponseDto();
             dto.setSessionId(tutorPayout.getTutorSession().getId());
             dto.setAmount(tutorPayout.getAmount());
             dto.setCommission(null);
             dto.setNetAmount(null);
             dto.setPaymentStatus(AppEnums.PaymentStatus.valueOf(tutorPayout.getPaymentStatus()));
+            dto.setSessionName(tutorPayout.getTutorSession().getSessionTitle());
+            dto.setCreatedByName(tutorPayout.getTutorSession().getCreatedBy().getFullName());
+            dto.setNoOfParticipant(sessionRegistrationRepository.countByRegisteredSessionIdAndStatusNotIn(
+                            tutorPayout.getTutorSession().getId(),
+                            Arrays.asList(
+                                    AppEnums.PaymentStatus.REFUND.toString(),
+                                    AppEnums.PaymentStatus.CANCELLED.toString(),
+                                    AppEnums.PaymentStatus.REJECT.toString()
+                                    )
+                            ));
             dtoList.add(dto);
         }
         return dtoList;
@@ -395,5 +404,31 @@ public class SessionService {
                     .collect(Collectors.toList());
         }
         return tutorSessions;
+    }
+
+    public List<PaymentSessionRegistrationResponseDto> getPaymentSessionRegistration(Integer sessionId) {
+        List<PaymentSessionRegistrationResponseDto> dtoList = new ArrayList<>();
+        List<SessionRegistration> registrations = sessionRegistrationRepository
+                .findByRegisteredSessionIdAndStatusNotIn(sessionId,
+                        Arrays.asList(
+                                AppEnums.PaymentStatus.REFUND.toString(),
+                                AppEnums.PaymentStatus.CANCELLED.toString(),
+                                AppEnums.PaymentStatus.REJECT.toString()
+                        )
+                );
+        registrations.forEach(registration -> {
+            PaymentSessionRegistrationResponseDto dto = new PaymentSessionRegistrationResponseDto();
+            dto.setId(registration.getId());
+            dto.setStudentName(registration.getStudentName());
+            dto.setStudentPhone(registration.getStudentPhone());
+            dto.setStudentEmail(registration.getStudentEmail());
+            dto.setGuardianName(registration.getGuardianName());
+            dto.setGuardianPhone(registration.getGuardianPhone());
+            dto.setGuardianEmail(registration.getGuardianEmail());
+            dto.setAge(registration.getStudentAge());
+            dto.setStatus(registration.getStatus());
+            dtoList.add(dto);
+        });
+        return dtoList;
     }
 }

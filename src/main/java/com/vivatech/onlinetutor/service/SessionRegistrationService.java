@@ -13,6 +13,7 @@ import com.vivatech.onlinetutor.model.TutorSession;
 import com.vivatech.onlinetutor.dto.SessionRegistrationRequestDto;
 import com.vivatech.onlinetutor.model.SessionRegistration;
 import com.vivatech.onlinetutor.notification.OnlineTutorNotificationService;
+import com.vivatech.onlinetutor.payment.PaymentDto;
 import com.vivatech.onlinetutor.payment.PaymentService;
 import com.vivatech.onlinetutor.repository.MumlyTutorPaymentRepository;
 import com.vivatech.onlinetutor.repository.SessionRegistrationRepository;
@@ -143,5 +144,17 @@ public class SessionRegistrationService {
         if (payment == null) throw new OnlineTutorExceptionHandler("Payment not found");
         String successTransactionId = CustomUtils.generateRandomString();
         paymentService.processPaymentCallBack(payment.getReferenceNo(), successTransactionId, AppEnums.PaymentStatus.COMPLETE.toString(), null);
+    }
+
+    public Response refundSessionRegistration(Integer id, String reason) {
+        SessionRegistration sessionRegistration = sessionRegistrationRepository.findById(id).orElseThrow(() -> new OnlineTutorExceptionHandler("Session registration not found"));
+        if (sessionRegistration.getStatus().equalsIgnoreCase(AppEnums.PaymentStatus.REFUND.toString())) throw new OnlineTutorExceptionHandler("Session registration already refunded");
+        MumlyTutorPayment payment = mumlyTutorPaymentRepository.findBySessionRegistrationAndPaymentStatus(sessionRegistration, AppEnums.PaymentStatus.COMPLETE.toString());
+        if (payment == null) throw new OnlineTutorExceptionHandler("Payment not found");
+        PaymentDto paymentDto = new PaymentDto();
+        paymentDto.setTransactionId(payment.getTransactionId());
+        paymentDto.setAmount(payment.getAmount());
+        paymentDto.setReason(reason);
+        return paymentService.refundTicket(paymentDto);
     }
 }

@@ -73,7 +73,15 @@ public class UserService {
         return userRepository.searchActiveUsers(searchTerm)
                 .stream()
                 .map(this::convertToDto)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public List<UserDto> searchUsersForChat(String searchTerm, User.UserRole role) {
+        List<UserDto> collect = userRepository.searchActiveUsersForChat(searchTerm, role)
+                .stream()
+                .map(this::convertToDto)
+                .toList();
+        return collect;
     }
     
     public UserDto updateUser(Long id, CreateUserRequest request) {

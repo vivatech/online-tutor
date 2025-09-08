@@ -14,7 +14,7 @@ public class AppEnums {
     }
 
     public enum PaymentStatus {
-        SUCCESS, FAILED, PENDING, CANCELLED, REFUND, REFUND_FAILED, COMPLETE
+        SUCCESS, FAILED, PENDING, CANCELLED, REFUND, REFUND_FAILED, COMPLETE, REJECT
     }
 
     public enum NotificationType {

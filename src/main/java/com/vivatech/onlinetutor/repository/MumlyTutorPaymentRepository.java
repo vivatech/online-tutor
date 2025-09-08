@@ -17,5 +17,7 @@ public interface MumlyTutorPaymentRepository extends JpaRepository<MumlyTutorPay
 
     List<MumlyTutorPayment> findBySessionRegistrationRegisteredSessionIdAndPaymentStatus(Integer sessionId, String paymentStatus);
 
+    MumlyTutorPayment findBySessionRegistrationAndPaymentStatus(SessionRegistration sessionregistration, String paymentStatus);
+
     List<MumlyTutorPayment> findBySessionRegistrationRegisteredSessionId(Integer sessionId);
 }

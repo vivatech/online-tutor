@@ -15,6 +15,10 @@ public interface SessionRegistrationRepository extends JpaRepository<SessionRegi
 
     List<SessionRegistration> findByRegisteredSessionId(Integer sessionId);
 
+    List<SessionRegistration> findByRegisteredSessionIdAndStatusNotIn(Integer sessionId, List<String> statusList);
+
+    Integer countByRegisteredSessionIdAndStatusNotIn(Integer sessionId, List<String> statusList);
+
     Integer countByRegisteredSessionIn(List<TutorSession> sessionId);
 
     SessionRegistration findByRegisteredSessionIdAndStudentPhone(Integer sessionId, String studentPhone);

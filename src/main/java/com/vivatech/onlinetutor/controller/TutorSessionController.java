@@ -1,8 +1,6 @@
 package com.vivatech.onlinetutor.controller;
 
-import com.vivatech.onlinetutor.dto.PaginationResponse;
-import com.vivatech.onlinetutor.dto.PayoutRequestDto;
-import com.vivatech.onlinetutor.dto.Response;
+import com.vivatech.onlinetutor.dto.*;
 import com.vivatech.onlinetutor.helper.AppEnums;
 import com.vivatech.onlinetutor.helper.Constants;
 import com.vivatech.onlinetutor.model.TutorSession;
@@ -88,7 +86,7 @@ public class TutorSessionController {
     @GetMapping("/search")
     @Operation(summary = "Search sessions by title, type, subject, price and frequency")
     public ResponseEntity<PaginationResponse<SessionResponseDTO>> searchSessionsByTitle(
-            @RequestParam String createdBy,
+            @RequestParam(required = false) String createdBy,
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String startTime,
@@ -127,10 +125,18 @@ public class TutorSessionController {
 
     @Operation(summary = "Get all pending payouts which has to be paid by Super admin")
     @GetMapping("/get-pending-payouts")
-    public ResponseEntity<List<PayoutRequestDto>> getPendingPayouts() {
-        List<PayoutRequestDto> pendingPayouts = sessionService.getPendingPayouts();
+    public ResponseEntity<List<PayoutResponseDto>> getPendingPayouts() {
+        List<PayoutResponseDto> pendingPayouts = sessionService.getPendingPayouts();
         if (pendingPayouts.isEmpty()) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(pendingPayouts);
+    }
+
+    @Operation(summary = "Get registered participants list for payment")
+    @GetMapping("/get-session-by-id-for-payment/{id}")
+    public ResponseEntity<List<PaymentSessionRegistrationResponseDto>> getSessionByIdForPayment(@PathVariable Integer id) {
+        List<PaymentSessionRegistrationResponseDto> paymentSessionRegistration = sessionService.getPaymentSessionRegistration(id);
+        if (paymentSessionRegistration.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(paymentSessionRegistration);
     }
 
     @Operation(summary = "Get all subjects of the session created the tutor")

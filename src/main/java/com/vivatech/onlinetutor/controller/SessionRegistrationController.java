@@ -89,4 +89,10 @@ public class SessionRegistrationController {
         sessionRegistrationService.receiveCashPayment(referenceNo);
         return ResponseEntity.ok("Payment received successfully");
     }
+
+    @Operation(summary = "Refund session registration")
+    @PostMapping("/refund")
+    public ResponseEntity<Response> refundTicket(@RequestParam Integer participantId, @RequestParam String reason) {
+        return new ResponseEntity<>(sessionRegistrationService.refundSessionRegistration(participantId, reason), HttpStatus.OK);
+    }
 }

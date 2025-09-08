@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -79,5 +80,12 @@ public class UserController {
     public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
         userService.deactivateUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search-users")
+    @Operation(summary = "Extended Search users based on name, phone number, email and user role type")
+    public ResponseEntity<List<UserDto>> searchUsers(@RequestParam(required = false) String term, @RequestParam User.UserRole role) {
+        List<UserDto> users = userService.searchUsersForChat(term, role);
+        return ResponseEntity.ok(users);
     }
 }

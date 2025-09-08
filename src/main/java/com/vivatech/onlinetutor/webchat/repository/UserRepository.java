@@ -30,5 +30,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "u.isActive = true")
     List<User> searchActiveUsers(@Param("searchTerm") String searchTerm);
 
+    @Query("SELECT u FROM User u WHERE " +
+            "(LOWER(u.username) LIKE LOWER(CONCAT('%', COALESCE(:searchTerm, ''), '%')) OR " +
+            "LOWER(u.fullName) LIKE LOWER(CONCAT('%', COALESCE(:searchTerm, ''), '%')) OR " +
+            "LOWER(u.msisdn) LIKE LOWER(CONCAT('%', COALESCE(:searchTerm, ''), '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', COALESCE(:searchTerm, ''), '%'))) AND " +
+            "(:role IS NULL OR u.role = :role) AND " +
+            "u.isActive = true")
+    List<User> searchActiveUsersForChat(@Param("searchTerm") String searchTerm, @Param("role") User.UserRole role);
+
     boolean existsByMsisdn(String msisdn);
 }
